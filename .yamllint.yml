@@ -1,0 +1,16 @@
+extends: default
+ignore: |
+  templates/
+  charts/
+  .git/
+rules:
+  line-length: disable
+  document-start: disable
+  comments-indentation: disable
+  truthy:
+    check-keys: false
+  comments:
+    min-spaces-from-content: 1
+  indentation:
+    spaces: 2
+    indent-sequences: consistent

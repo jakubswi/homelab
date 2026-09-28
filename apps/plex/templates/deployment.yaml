@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: plex
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: plex
+  template:
+    metadata:
+      labels:
+        app: plex
+    spec:
+      containers:
+        - name: plex
+          image: lscr.io/linuxserver/plex:latest
+          env:
+            - name: PUID
+              value: "1000"
+            - name: PGID
+              value: "1000"
+            - name: TZ
+              value: "{{ .Values.timezone }}"
+            - name: VERSION
+              value: "docker"
+            - name: PLEX_CLAIM
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ .Values.plexClaimTokenSecret }}"
+                  key: token
+                  optional: true
+          ports:
+            - containerPort: 32400
+          resources:
+            limits:
+              gpu.intel.com/i915: 1
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: media
+              mountPath: /media
+              readOnly: true
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: plex-config
+        - name: media
+          hostPath:
+            path: /mnt/media

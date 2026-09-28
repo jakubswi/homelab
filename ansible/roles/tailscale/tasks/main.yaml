@@ -1,0 +1,49 @@
+---
+
+- name: Download Tailscale installation script
+  ansible.builtin.get_url:
+    url: https://tailscale.com/install.sh
+    dest: /tmp/tailscale-install.sh
+    mode: '0755'
+  become: true
+
+- name: Execute Tailscale installation script
+  ansible.builtin.command: /tmp/tailscale-install.sh
+  args:
+    creates: /usr/bin/tailscale
+  become: true
+
+- name: Enable IPv4 IP forwarding for subnet routing
+  ansible.posix.sysctl:
+    name: net.ipv4.ip_forward
+    value: '1'
+    sysctl_set: true
+    state: present
+    reload: true
+  become: true
+
+- name: Enable IPv6 IP forwarding for subnet routing
+  ansible.posix.sysctl:
+    name: net.ipv6.conf.all.forwarding
+    value: '1'
+    sysctl_set: true
+    state: present
+    reload: true
+  become: true
+
+- name: Check Tailscale authentication status
+  ansible.builtin.command: tailscale status
+  register: tailscale_status
+  changed_when: false
+  failed_when: false
+  become: true
+
+- name: Bring Tailscale up and advertise routes (if authkey is provided)
+  ansible.builtin.command: "tailscale up --advertise-routes={{ lan_subnet | default('192.168.1.0/24') }} --authkey={{ tailscale_authkey }}"
+  become: true
+  when: tailscale_status.rc != 0 and tailscale_authkey is defined
+
+- name: Display manual authentication instructions (if no authkey)
+  ansible.builtin.debug:
+    msg: "Tailscale is not authenticated. SSH into your node and run: sudo tailscale up --advertise-routes={{ lan_subnet | default('192.168.1.0/24') }}"
+  when: tailscale_status.rc != 0 and tailscale_authkey is not defined

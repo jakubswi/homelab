@@ -1,0 +1,22 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "schedule": ["before 8am on saturday"],
+  "prConcurrentLimit": 5,
+  "helmv3": { "fileMatch": ["(^|/)Chart\\.ya?ml$"] },
+  "kubernetes": { "fileMatch": ["^apps/.+\\.ya?ml$", "^platform/.+\\.ya?ml$", "^bootstrap/.+\\.ya?ml$"] },
+  "kustomize": { "fileMatch": ["(^|/)kustomization\\.ya?ml$"] },
+  "customManagers": [
+    {
+      "customType": "regex",
+      "fileMatch": ["^bootstrap/argocd/kustomization\\.yaml$"],
+      "matchStrings": ["argo-cd/(?<currentValue>v[\\d.]+)/manifests"],
+      "depNameTemplate": "argoproj/argo-cd",
+      "datasourceTemplate": "github-releases"
+    }
+  ],
+  "packageRules": [
+    { "matchUpdateTypes": ["minor", "patch"], "matchManagers": ["helmv3", "kubernetes"], "groupName": "minor and patch updates" },
+    { "matchManagers": ["github-actions"], "groupName": "github actions" }
+  ]
+}

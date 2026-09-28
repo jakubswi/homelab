@@ -1,0 +1,6 @@
+dependencies:
+- name: adguard-home
+  repository: https://repo.helmforge.dev
+  version: 1.5.2
+digest: sha256:6a69fb0d5b55f7280972e11f0bc84b8ec406084bb570995ceca660fe1dbee863
+generated: "2026-09-28T20:36:57.28159074+02:00"

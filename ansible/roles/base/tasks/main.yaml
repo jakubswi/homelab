@@ -1,0 +1,50 @@
+---
+
+- name: Update apt cache and perform full system upgrade
+  ansible.builtin.apt:
+    update_cache: true
+    upgrade: full
+  become: true
+
+- name: Install security and base packages
+  ansible.builtin.apt:
+    name:
+      - unattended-upgrades
+      - ufw
+      - fail2ban
+    state: present
+  become: true
+
+- name: Disable SSH password authentication
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?PasswordAuthentication'
+    line: 'PasswordAuthentication no'
+    state: present
+    validate: 'sshd -t -f %s'
+  notify: Restart SSH
+  become: true
+
+- name: Configure UFW default policy (deny incoming)
+  community.general.ufw:
+    default: deny
+    direction: incoming
+  become: true
+
+- name: Allow LAN access to essential ports (SSH, HTTP, HTTPS, K3s API, DNS)
+  community.general.ufw:
+    rule: allow
+    src: "{{ lan_subnet | default('192.168.1.0/24') }}"
+    port: "{{ item }}"
+  loop:
+    - "22"
+    - "80"
+    - "443"
+    - "6443"
+    - "53"
+  become: true
+
+- name: Enable UFW firewall
+  community.general.ufw:
+    state: enabled
+  become: true

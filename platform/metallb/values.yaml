@@ -1,0 +1,3 @@
+metallb:
+  crds:
+    enabled: true
