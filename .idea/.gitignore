@@ -1,0 +1,14 @@
+.kubeconfig.yaml
+kubeconfig*
+*.retry
+.vault-pass
+.env
+.venv/
+.DS_Store
+
+**/charts/
+*.tgz
+
+*.backup.yaml
+*.unsealed.yaml
+secrets/

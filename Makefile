@@ -16,10 +16,10 @@ ansible-deps: ## Install required Ansible collections
 > cd ansible && ansible-galaxy collection install -r requirements.yml
 
 provision: ## Harden the host and install k3s
-> cd ansible && ansible-playbook site.yml
+> cd ansible && ansible-playbook site.yml -K
 
 provision-check: ## Dry-run the playbook
-> cd ansible && ansible-playbook site.yml --check --diff
+> cd ansible && ansible-playbook site.yml --check --diff -K
 
 deps: ## Refresh Helm dependencies and Chart.lock files
 > bash scripts/helm-deps.sh

@@ -1,4 +1,4 @@
 service:
   dns:
     type: LoadBalancer
-    loadBalancerIP: 192.168.1.241
+    loadBalancerIP: 192.168.0.241

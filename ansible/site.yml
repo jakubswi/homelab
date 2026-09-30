@@ -1,0 +1,8 @@
+---
+- name: Provision Homelab Node
+  hosts: homelab
+  become: true
+  roles:
+    - base
+    - k3s
+    - tailscale

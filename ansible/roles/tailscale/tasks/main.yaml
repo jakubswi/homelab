@@ -39,11 +39,11 @@
   become: true
 
 - name: Bring Tailscale up and advertise routes (if authkey is provided)
-  ansible.builtin.command: "tailscale up --advertise-routes={{ lan_subnet | default('192.168.1.0/24') }} --authkey={{ tailscale_authkey }}"
+  ansible.builtin.command: "tailscale up --advertise-routes={{ lan_subnet | default('192.168.0.0/24') }} --authkey={{ tailscale_authkey }}"
   become: true
   when: tailscale_status.rc != 0 and tailscale_authkey is defined
 
 - name: Display manual authentication instructions (if no authkey)
   ansible.builtin.debug:
-    msg: "Tailscale is not authenticated. SSH into your node and run: sudo tailscale up --advertise-routes={{ lan_subnet | default('192.168.1.0/24') }}"
+    msg: "Tailscale is not authenticated. SSH into your node and run: sudo tailscale up --advertise-routes={{ lan_subnet | default('192.168.0.0/24') }}"
   when: tailscale_status.rc != 0 and tailscale_authkey is not defined

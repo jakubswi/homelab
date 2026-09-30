@@ -1,0 +1,179 @@
+OptiPlex 3080 GitOps Homelab: Plan and Setup Guide
+The design in one paragraph
+
+Run a single-node k3s Kubernetes cluster on Ubuntu Server LTS. ArgoCD deploys everything from one Git repo, so the whole server can be rebuilt from scratch. Apps are Plex, AdGuard Home (DNS) and a monitoring stack. Access is via valid HTTPS on your own domain, with Tailscale for remote access. The Git repo, CI checks, monitoring and documentation are what make it a portfolio piece.
+
+1. Distro choice
+Option	Verdict
+Ubuntu Server LTS (24.04, or the newer LTS if you prefer)	Recommended. Best docs, good Intel iGPU support for Plex transcoding, and k3s and Ansible are well tested on it.
+Debian stable	Equally good and leaner. Choose it if you prefer minimal systems.
+Talos Linux	Immutable and API-managed, so it looks great on a CV. But it's harder to debug, and Intel GPU passthrough needs extra work. A good phase 2 rebuild once the repo works.
+
+Use plain Ubuntu now. Because everything is in Git, moving to Talos later is a reinstall plus one bootstrap.
+
+2. Hardware prep
+Update the BIOS. Set AC Recovery → Power On so the box comes back after a power cut. Confirm VT-x is on.
+Use wired Ethernet and a DHCP reservation on your router (for example 192.168.0.10).
+Recommended: 16 GB RAM or more, an NVMe or SSD for the OS and app configs, and a separate HDD or SSD for media (mounted at /mnt/media).
+The 3080's Intel iGPU (Quick Sync) handles Plex transcoding. Hardware transcoding requires Plex Pass.
+3. Repo structure
+
+Create this first, in a public GitHub repo:
+
+homelab/
+├── ansible/            # host provisioning (OS hardening, k3s install)
+├── bootstrap/          # one-time ArgoCD install + root app
+├── clusters/home/
+│   ├── root-app.yaml   # app-of-apps entrypoint
+│   └── apps.yaml       # ApplicationSet scanning apps/*
+├── platform/           # metallb, traefik, cert-manager, sealed-secrets, monitoring
+├── apps/               # plex, adguard, uptime-kuma, ...
+├── docs/               # architecture diagram, runbooks, DR steps
+└── .github/workflows/  # lint + validate manifests
+4. Install and harden the OS
+Install Ubuntu Server (minimal), enable OpenSSH, and use LVM or plain ext4.
+Add your SSH key, then disable password login:
+bash
+   sudo sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config
+   sudo systemctl restart ssh
+Turn on automatic security updates and a firewall:
+bash
+   sudo apt update && sudo apt full-upgrade -y
+   sudo apt install -y unattended-upgrades ufw fail2ban
+   sudo ufw default deny incoming
+   sudo ufw allow from 192.168.0.0/24 to any port 22,80,443,6443,53
+   sudo ufw enable
+Mount the media disk in /etc/fstab at /mnt/media.
+Showcase step: once it works by hand, turn steps 2–4 and the k3s install into an Ansible role and commit it.
+5. Install k3s
+
+Write /etc/rancher/k3s/config.yaml:
+
+yaml
+write-kubeconfig-mode: "0644"
+disable:
+  - traefik      # we'll install it via ArgoCD instead
+  - servicelb    # replaced by MetalLB
+bash
+curl -sfL https://get.k3s.io | sh -
+sudo kubectl get nodes        # should show Ready
+
+Copy /etc/rancher/k3s/k3s.yaml to ~/.kube/config on your laptop and change the server address to the node's IP.
+
+6. Bootstrap ArgoCD
+bash
+kubectl create namespace argocd
+kubectl apply -n argocd --server-side -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d
+
+Then apply your root app, which is the only thing you ever apply by hand:
+
+yaml
+# clusters/home/root-app.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: root
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/<you>/homelab
+    targetRevision: main
+    path: clusters/home
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated: { prune: true, selfHeal: true }
+
+An ApplicationSet in clusters/home/apps.yaml with a Git directory generator over platform/* and apps/* means that adding a folder deploys a new app.
+
+7. Platform layer (deploy in this order via ArgoCD)
+
+Use sync waves (argocd.argoproj.io/sync-wave annotations) so CRDs exist before resources that use them.
+
+MetalLB (wave 0) with an IPAddressPool of spare LAN IPs (for example 192.168.0.240–250, outside your DHCP range) and an L2Advertisement. Each service gets its own IP, which is how DNS gets a clean port 53.
+Traefik (wave 1) as the ingress, pinned to 192.168.0.240.
+cert-manager (wave 1) with a Let's Encrypt ClusterIssuer using DNS-01 via Cloudflare. This gives valid HTTPS for names like plex.home.yourdomain.com while the services stay LAN-only. Buy a cheap domain and put it on Cloudflare.
+Secrets: Sealed Secrets, or SOPS with age. Never commit plaintext secrets.
+Monitoring (section 10).
+8. DNS: AdGuard Home
+Deploy the AdGuard Home Helm chart or a plain Deployment with a LoadBalancer Service pinned to 192.168.0.241 on TCP and UDP 53, plus a web UI behind Traefik.
+Add DNS rewrites: *.home.yourdomain.com → 192.168.0.240.
+Test with one device first by setting its DNS manually. Once stable, set your router's DHCP to hand out 192.168.0.241 as the primary and a public resolver or the router itself as the secondary.
+Warning: with one node, DNS goes down whenever the box reboots, and your whole household loses name resolution. The secondary DNS entry protects against that. Keep it.
+Later, add external-dns or OpenTofu to manage DNS records as code.
+9. Plex
+Check the GPU exists: ls -l /dev/dri (you want renderD128). Note the GIDs of the video and render groups with getent group video render.
+Get a claim token from plex.tv/claim (valid for about 4 minutes, so apply quickly).
+Manifest sketch:
+yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: plex, namespace: plex }
+spec:
+  replicas: 1
+  strategy: { type: Recreate }
+  selector: { matchLabels: { app: plex } }
+  template:
+    metadata: { labels: { app: plex } }
+    spec:
+      securityContext:
+        supplementalGroups: [44, 109]   # video, render: verify on your host
+      containers:
+        - name: plex
+          image: lscr.io/linuxserver/plex:latest   # pin a version tag in practice
+          env:
+            - { name: PUID, value: "1000" }
+            - { name: PGID, value: "1000" }
+            - { name: TZ, value: "<your/timezone>" }
+            - { name: VERSION, value: "docker" }
+            - name: PLEX_CLAIM
+              valueFrom: { secretKeyRef: { name: plex-claim, key: token } }
+          ports: [{ containerPort: 32400 }]
+          volumeMounts:
+            - { name: config, mountPath: /config }
+            - { name: media, mountPath: /media, readOnly: true }
+            - { name: dri, mountPath: /dev/dri }
+          securityContext: { privileged: false }
+      volumes:
+        - name: config
+          persistentVolumeClaim: { claimName: plex-config }   # local-path
+        - name: media
+          hostPath: { path: /mnt/media }
+        - name: dri
+          hostPath: { path: /dev/dri }
+Expose it with a Service and an Ingress at plex.home.yourdomain.com. For local clients, you can also give it its own MetalLB IP.
+In Plex: Settings → Transcoder → enable hardware acceleration, and confirm it shows (hw) on a test stream.
+Cleaner approach for the showcase: replace the raw hostPath GPU mount with the Intel GPU device plugin (Node Feature Discovery plus intel-device-plugins-for-kubernetes), so you request gpu.intel.com/i915: 1 as a resource.
+
+Only host media you own or have rights to.
+
+10. Supervision and observability
+kube-prometheus-stack (Prometheus, Alertmanager, Grafana, node-exporter) via ArgoCD.
+Loki plus Grafana Alloy for logs. Promtail is deprecated, so use Alloy.
+smartctl-exporter for disk health, since your media disk is the most likely thing to die.
+Alerts: node down, disk over 85%, SMART failures, pod crash-looping, cert expiring, ArgoCD app out of sync. Route them to ntfy or Discord via Alertmanager.
+Uptime Kuma for simple checks (DNS answering, Plex responding).
+External check: a free uptime monitor or Healthchecks.io ping from a CronJob, so you're alerted when the whole box dies (in-cluster monitoring can't report its own death).
+ArgoCD Notifications for sync failures.
+11. Remote access
+
+Install Tailscale on the host and advertise your LAN subnet as a subnet router. You get secure remote access without opening router ports. For Plex outside the house, use the Tailscale route or Plex's own remote access feature (which needs a port forward on 32400). Don't expose ArgoCD, Grafana or AdGuard to the internet.
+
+12. Managing it: what makes this a portfolio project
+Renovate (GitHub app) opens PRs for Helm chart and image updates. You merge, and ArgoCD deploys.
+CI (GitHub Actions): yamllint, kubeconform, kube-linter or Trivy config scan on every PR. Add a pre-commit config.
+Backups: Plex config and AdGuard config are backed up nightly with a restic CronJob to an external USB drive and Backblaze B2 (or similar). Do a restore test and write it down.
+Disaster recovery doc: "bare metal to fully running in N commands" (Ansible playbook, then kubectl apply of the root app, then restore backups). Time it, and put the time in the README.
+README: an architecture diagram, a tech-stack table, screenshots of Grafana and ArgoCD, and a short "decisions and trade-offs" section (why k3s, why MetalLB, single-node limitations).
+Optional stretch goals: OpenTofu for Cloudflare DNS, Kyverno policies, network policies, an Argo Rollouts demo, a second node (a used mini PC) to make it a real HA cluster, or a migration to Talos.
+13. Suggested timeline
+Weekend	Goal
+1	BIOS, OS install, hardening, k3s, ArgoCD, root app
+2	MetalLB, Traefik, cert-manager, sealed secrets, HTTPS on a test app
+3	AdGuard Home, then migrate the router's DNS carefully
+4	Plex with hardware transcoding, media library
+5	Monitoring, alerts, Tailscale
+6	Backups and restore test, CI, Renovate, Ansible role, README

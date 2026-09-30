@@ -34,7 +34,7 @@
 - name: Allow LAN access to essential ports (SSH, HTTP, HTTPS, K3s API, DNS)
   community.general.ufw:
     rule: allow
-    src: "{{ lan_subnet | default('192.168.1.0/24') }}"
+    src: "{{ lan_subnet | default('192.168.0.0/24') }}"
     port: "{{ item }}"
   loop:
     - "22"
