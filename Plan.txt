@@ -177,6 +177,3 @@ Weekend	Goal
 4	Plex with hardware transcoding, media library
 5	Monitoring, alerts, Tailscale
 6	Backups and restore test, CI, Renovate, Ansible role, README
-
-
-etMENQKIpdbD3vgZ
