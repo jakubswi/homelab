@@ -78,7 +78,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/<you>/homelab
+    repoURL: https://github.com/jakubswi/homelab
     targetRevision: main
     path: clusters/home
   destination:
@@ -177,3 +177,6 @@ Weekend	Goal
 4	Plex with hardware transcoding, media library
 5	Monitoring, alerts, Tailscale
 6	Backups and restore test, CI, Renovate, Ansible role, README
+
+
+etMENQKIpdbD3vgZ
