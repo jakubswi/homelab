@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: plex
+  namespace: plex
 spec:
   replicas: 1
   strategy:
@@ -23,13 +24,13 @@ spec:
             - name: PGID
               value: "1000"
             - name: TZ
-              value: "{{ .Values.timezone }}"
+              value: "Europe/Warsaw"
             - name: VERSION
               value: "docker"
             - name: PLEX_CLAIM
               valueFrom:
                 secretKeyRef:
-                  name: "{{ .Values.plexClaimTokenSecret }}"
+                  name: "plex-claim"
                   key: token
                   optional: true
           ports:
