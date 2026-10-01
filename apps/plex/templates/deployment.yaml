@@ -35,15 +35,14 @@ spec:
                   optional: true
           ports:
             - containerPort: 32400
-          resources:
-            limits:
-              gpu.intel.com/i915: 1
           volumeMounts:
             - name: config
               mountPath: /config
             - name: media
               mountPath: /media
               readOnly: true
+            - name: dri
+              mountPath: /dev/dri
       volumes:
         - name: config
           persistentVolumeClaim:
@@ -51,3 +50,6 @@ spec:
         - name: media
           hostPath:
             path: /mnt/media
+        - name: dri
+          hostPath:
+            path: /dev/dri
