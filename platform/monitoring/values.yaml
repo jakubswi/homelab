@@ -1,0 +1,14 @@
+kube-prometheus-stack:
+  prometheus:
+    prometheusSpec:
+      serviceMonitorSelectorNilUsesHelmValues: false
+      podMonitorSelectorNilUsesHelmValues: false
+
+  grafana:
+    adminPassword: "admin"
+    ingress:
+      enabled: true
+      ingressClassName: traefik
+      hosts:
+        - grafana.homelab.local
+      path: /
