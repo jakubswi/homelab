@@ -1,0 +1,47 @@
+jellyfin:
+  replicaCount: 1
+
+  image:
+    pullPolicy: IfNotPresent
+
+  persistence:
+    config:
+      enabled: true
+      size: 5Gi
+      storageClass: 'local-path'
+    media:
+      enabled: false
+
+  ingress:
+    enabled: true
+    className: 'traefik'
+    hosts:
+      - host: jellyfin.homelab.local
+        paths:
+          - path: /
+            pathType: Prefix
+
+  extraVolumes:
+    - name: dri
+      hostPath:
+        path: /dev/dri
+    - name: media
+      hostPath:
+        path: /mnt/media
+
+  extraVolumeMounts:
+    - name: dri
+      mountPath: /dev/dri
+    - name: media
+      mountPath: /media
+      readOnly: true
+
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
