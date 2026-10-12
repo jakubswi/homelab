@@ -36,6 +36,7 @@ spec:
           kind: Ingress
           jsonPointers:
             - /status
+            - /metadata/annotations
         - group: ""
           kind: PersistentVolumeClaim
         - group: ""
