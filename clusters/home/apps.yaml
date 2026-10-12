@@ -34,6 +34,8 @@ spec:
       ignoreDifferences:
         - group: networking.k8s.io
           kind: Ingress
+          jsonPointers:
+            - /status
         - group: ""
           kind: PersistentVolumeClaim
         - group: ""
@@ -42,3 +44,7 @@ spec:
           kind: CustomResourceDefinition
           jsonPointers:
             - /spec/conversion/webhook/clientConfig/caBundle
+        - group: ""
+          kind: ConfigMap
+          jsonPointers:
+            - /data
