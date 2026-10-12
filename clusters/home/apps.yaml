@@ -34,8 +34,10 @@ spec:
       ignoreDifferences:
         - group: networking.k8s.io
           kind: Ingress
-          jsonPointers:
-            - /status
+        - group: ""
+          kind: PersistentVolumeClaim
+        - group: ""
+          kind: Service
         - group: apiextensions.k8s.io
           kind: CustomResourceDefinition
           jsonPointers:

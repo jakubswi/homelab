@@ -10,7 +10,9 @@ jellyfin:
       size: 5Gi
       storageClass: 'local-path'
     media:
-      enabled: false
+      enabled: true
+      size: 200Gi
+      storageClass: 'local-path'
 
   ingress:
     enabled: true
@@ -25,16 +27,10 @@ jellyfin:
     - name: dri
       hostPath:
         path: /dev/dri
-    - name: media
-      hostPath:
-        path: /mnt/media
 
   extraVolumeMounts:
     - name: dri
       mountPath: /dev/dri
-    - name: media
-      mountPath: /media
-      readOnly: true
 
   resources:
     requests:
