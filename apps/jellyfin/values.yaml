@@ -22,6 +22,9 @@ jellyfin:
         paths:
           - path: /
             pathType: Prefix
+      - paths:
+          - path: /
+            pathType: Prefix
 
   extraVolumes:
     - name: dri
