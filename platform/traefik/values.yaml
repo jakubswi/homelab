@@ -6,3 +6,6 @@ traefik:
     web:
       redirectTo:
         port: websecure
+
+  additionalArguments:
+    - "--providers.kubernetesingress.ingressendpoint.publishedservice=traefik/traefik"
