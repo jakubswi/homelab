@@ -13,5 +13,5 @@ for key in "$@"; do
   args+=("--from-literal=${key}=${val}")
 done
 kubectl create secret generic "$name" -n "$ns" "${args[@]}" --dry-run=client -o yaml \
-  | kubeseal --controller-name sealed-secrets-controller --controller-namespace sealed-secrets --format yaml > "$out"
+  | kubeseal --controller-name sealed-secrets --controller-namespace sealed-secrets --format yaml > "$out"
 echo "Wrote $out. Commit and push it."

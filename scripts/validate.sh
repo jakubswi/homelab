@@ -15,7 +15,7 @@ for dir in platform/* apps/* clusters/home bootstrap/argocd; do
   echo "==> $dir"
   if [ -f "$dir/Chart.yaml" ]; then
     helm dependency update "$dir" >/dev/null
-    out=$(helm template "$name" "$dir" --namespace "$name" --include-crds) || { fail=1; continue; }
+    out=$(helm template "$name" "$dir" --namespace "$name" --include-crds --api-versions monitoring.coreos.com/v1) || { fail=1; continue; }
   elif [ -f "$dir/kustomization.yaml" ]; then
     out=$(kubectl kustomize "$dir") || { fail=1; continue; }
   else
