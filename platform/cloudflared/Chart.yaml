@@ -1,0 +1,4 @@
+apiVersion: v2
+name: cloudflared
+version: 1.0.0
+description: Zero-Trust Cloudflare Tunnel for external ingress

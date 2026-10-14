@@ -12,3 +12,4 @@ kubeconfig*
 *.backup.yaml
 *.unsealed.yaml
 secrets/
+.idea/

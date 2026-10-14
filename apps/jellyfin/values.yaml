@@ -4,10 +4,27 @@ jellyfin:
   image:
     pullPolicy: IfNotPresent
 
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    supplementalGroups:
+      - 44
+      - 109
+    seccompProfile:
+      type: RuntimeDefault
+
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+
   persistence:
     config:
       enabled: true
-      size: 5Gi
+      size: 10Gi
       storageClass: 'local-path'
     media:
       enabled: true
@@ -17,12 +34,13 @@ jellyfin:
   ingress:
     enabled: true
     className: 'traefik'
+    annotations:
+      traefik.ingress.kubernetes.io/router.entrypoints: websecure
+      traefik.ingress.kubernetes.io/router.tls: "true"
+      traefik.ingress.kubernetes.io/router.middlewares: traefik-rate-limit@kubernetescrd,traefik-security-headers@kubernetescrd
     hosts:
-      - host: jellyfin.homelab.local
+      - host: jellyfin.jakubswi.dev
         paths:
-          - path: /
-            pathType: Prefix
-      - paths:
           - path: /
             pathType: Prefix
 
