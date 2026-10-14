@@ -28,5 +28,5 @@ traefik:
 
   additionalArguments:
     - "--providers.kubernetesingress.ingressendpoint.publishedservice=traefik/traefik"
-    - "-- providers.kubernetescrd.allowCrossNamespace=true"
+    - "--providers.kubernetescrd.allowCrossNamespace=true"
     - "--entrypoints.websecure.forwardedHeaders.trustedIPs=10.42.0.0/16,192.168.0.0/24"
