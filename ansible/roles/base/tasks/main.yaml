@@ -48,3 +48,11 @@
   community.general.ufw:
     state: enabled
   become: true
+
+- name: Expand Ubuntu LVM root volume to 100% of available VG space
+  community.general.lvol:
+    vg: ubuntu-vg
+    lv: ubuntu-lv
+    size: +100%FREE
+    resizefs: true
+  become: true
