@@ -40,3 +40,12 @@ spec:
           kind: CustomResourceDefinition
           jsonPointers:
             - /spec/conversion/webhook/clientConfig/caBundle
+        - group: external-secrets.io
+          kind: ExternalSecret
+          jqPathExpressions:
+            - .spec.data[].remoteRef.conversionStrategy
+            - .spec.data[].remoteRef.decodingStrategy
+            - .spec.data[].remoteRef.metadataPolicy
+            - .spec.target.deletionPolicy
+            - .spec.target.template.engineVersion
+            - .spec.target.template.mergePolicy
