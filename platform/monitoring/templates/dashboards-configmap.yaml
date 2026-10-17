@@ -21,7 +21,7 @@ data:
           "targets": [
             {
               "expr": "sum by (namespace) (kube_pod_status_ready{condition=\"true\", namespace=~\"jellyfin|adguard|cloudflared|traefik|cert-manager|external-secrets|argocd\"})",
-              "legendFormat": "{{namespace}}"
+              "legendFormat": "{{ "{{namespace}}" }}"
             }
           ]
         },
@@ -32,7 +32,7 @@ data:
           "targets": [
             {
               "expr": "sum by (namespace) (rate(container_cpu_usage_seconds_total{namespace=~\"jellyfin|adguard|cloudflared|traefik\", container!=\"\"}[5m]))",
-              "legendFormat": "{{namespace}}"
+              "legendFormat": "{{ "{{namespace}}" }}"
             }
           ]
         },
@@ -43,7 +43,7 @@ data:
           "targets": [
             {
               "expr": "sum by (namespace) (container_memory_working_set_bytes{namespace=~\"jellyfin|adguard|cloudflared|traefik\", container!=\"\"})",
-              "legendFormat": "{{namespace}}"
+              "legendFormat": "{{ "{{namespace}}" }}"
             }
           ]
         },
@@ -54,11 +54,11 @@ data:
           "targets": [
             {
               "expr": "rate(cloudflared_tunnel_total_requests[5m])",
-              "legendFormat": "Tunnel Req/s ({{pod}})"
+              "legendFormat": "Tunnel Req/s ({{ "{{pod}}" }})"
             },
             {
               "expr": "cloudflared_tunnel_ha_connections",
-              "legendFormat": "HA Connections ({{pod}})"
+              "legendFormat": "HA Connections ({{ "{{pod}}" }})"
             }
           ]
         },
@@ -69,7 +69,7 @@ data:
           "targets": [
             {
               "expr": "sum by (service, code) (rate(traefik_service_requests_total[5m]))",
-              "legendFormat": "{{service}} [{{code}}]"
+              "legendFormat": "{{ "{{service}}" }} [{{ "{{code}}" }}]"
             }
           ]
         }
