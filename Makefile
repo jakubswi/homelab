@@ -39,7 +39,3 @@ argocd-password: ## Print the initial Argo CD admin password
 
 argocd-ui: ## Port-forward Argo CD to http://localhost:8080
 > kubectl -n argocd port-forward svc/argocd-server 8080:80
-
-backup-sealing-key: ## Export the Sealed Secrets key (store OFFLINE, never in git)
-> kubectl -n sealed-secrets get secret -l sealedsecrets.bitnami.com/sealed-secrets-key -o yaml > sealed-secrets-key.backup.yaml
-> @echo "Wrote sealed-secrets-key.backup.yaml. Move it to a password manager or offline storage, then delete the local copy."

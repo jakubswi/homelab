@@ -1,0 +1,62 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: homelab-alert-rules
+  namespace: monitoring
+  labels:
+    release: monitoring
+spec:
+  groups:
+    - name: homelab.infrastructure.rules
+      rules:
+        - alert: ServicePodCrashLooping
+          expr: rate(kube_pod_container_status_restarts_total[15m]) * 60 * 5 > 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Pod {{ $labels.namespace }}/{{ $labels.pod }} is crash-looping"
+            description: "Container {{ $labels.container }} has restarted {{ $value | printf \"%.1f\" }} times in the last 15 minutes."
+
+        - alert: HomelabServiceDown
+          expr: kube_deployment_status_replicas_available{namespace=~"jellyfin|adguard|cloudflared|traefik|external-secrets"} == 0
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Critical homelab service {{ $labels.namespace }}/{{ $labels.deployment }} is DOWN"
+            description: "Zero available replicas in namespace {{ $labels.namespace }} for over 2 minutes."
+
+        - alert: NodeFilesystemAlmostFull
+          expr: (1 - (node_filesystem_avail_bytes{fstype!~"tmpfs|overlay"} / node_filesystem_size_bytes{fstype!~"tmpfs|overlay"})) * 100 > 85
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Host disk usage above 85% on {{ $labels.mountpoint }}"
+            description: "Filesystem {{ $labels.mountpoint }} is {{ $value | printf \"%.1f\" }}% full."
+
+        - alert: CloudflareTunnelDisconnected
+          expr: sum(cloudflared_tunnel_ha_connections) < 1
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Cloudflare Zero Trust Tunnel has no active HA connections"
+            description: "External ingress for jellyfin.jakubswi.dev is unreachable."
+
+        - alert: ExternalSecretSyncFailed
+          expr: externalsecret_status_condition{condition="Ready", status="False"} == 1
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "ExternalSecret {{ $labels.exported_namespace }}/{{ $labels.name }} failed to sync from AWS Secrets Manager"
+
+        - alert: CertificateExpiringSoon
+          expr: (certmanager_certificate_expiration_timestamp_seconds - time()) / 86400 < 14
+          for: 1h
+          labels:
+            severity: warning
+          annotations:
+            summary: "TLS Certificate {{ $labels.name }} expires in less than 14 days"

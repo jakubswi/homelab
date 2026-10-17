@@ -1,0 +1,77 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: homelab-services-dashboard
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+data:
+  homelab-workloads.json: |
+    {
+      "title": "Homelab Workloads Overview (Jellyfin / Cloudflared / AdGuard)",
+      "uid": "homelab-workloads",
+      "timezone": "browser",
+      "schemaVersion": 39,
+      "refresh": "30s",
+      "panels": [
+        {
+          "title": "Service Pod Availability",
+          "type": "stat",
+          "gridPos": {"h": 4, "w": 24, "x": 0, "y": 0},
+          "targets": [
+            {
+              "expr": "sum by (namespace) (kube_pod_status_ready{condition=\"true\", namespace=~\"jellyfin|adguard|cloudflared|traefik|cert-manager|external-secrets|argocd\"})",
+              "legendFormat": "{{namespace}}"
+            }
+          ]
+        },
+        {
+          "title": "CPU Usage by Service (Cores)",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
+          "targets": [
+            {
+              "expr": "sum by (namespace) (rate(container_cpu_usage_seconds_total{namespace=~\"jellyfin|adguard|cloudflared|traefik\", container!=\"\"}[5m]))",
+              "legendFormat": "{{namespace}}"
+            }
+          ]
+        },
+        {
+          "title": "Memory Working Set by Service",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
+          "targets": [
+            {
+              "expr": "sum by (namespace) (container_memory_working_set_bytes{namespace=~\"jellyfin|adguard|cloudflared|traefik\", container!=\"\"})",
+              "legendFormat": "{{namespace}}"
+            }
+          ]
+        },
+        {
+          "title": "Cloudflare Tunnel Active QUIC Streams & Requests",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12},
+          "targets": [
+            {
+              "expr": "rate(cloudflared_tunnel_total_requests[5m])",
+              "legendFormat": "Tunnel Req/s ({{pod}})"
+            },
+            {
+              "expr": "cloudflared_tunnel_ha_connections",
+              "legendFormat": "HA Connections ({{pod}})"
+            }
+          ]
+        },
+        {
+          "title": "Traefik HTTP Requests by Host",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12},
+          "targets": [
+            {
+              "expr": "sum by (service, code) (rate(traefik_service_requests_total[5m]))",
+              "legendFormat": "{{service}} [{{code}}]"
+            }
+          ]
+        }
+      ]
+    }
