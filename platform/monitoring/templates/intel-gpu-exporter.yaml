@@ -45,3 +45,20 @@ spec:
   endpoints:
     - port: metrics
       interval: 15s
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: intel-gpu-exporter
+  namespace: monitoring
+  labels:
+    app: intel-gpu-exporter
+    release: monitoring
+spec:
+  clusterIP: None
+  ports:
+    - name: metrics
+      port: 8080
+      targetPort: 8080
+  selector:
+    app: intel-gpu-exporter
