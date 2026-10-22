@@ -13,8 +13,8 @@ spec:
     metadata:
       labels:
         app: intel-gpu-exporter
-      hostNetwork: true
     spec:
+      hostNetwork: true
       containers:
         - name: intel-gpu-exporter
           image: ghcr.io/intel/intel-gpu-exporter:latest
