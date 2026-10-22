@@ -17,7 +17,7 @@ spec:
       hostNetwork: true
       containers:
         - name: intel-gpu-exporter
-          image: ghcr.io/intel/intel-gpu-exporter:latest
+          image: ghcr.io/onedr0p/intel-gpu-exporter:rolling
           securityContext:
             privileged: true
           ports:
