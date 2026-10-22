@@ -1,0 +1,4 @@
+apiVersion: v2
+name: spotify-wrapped
+description: Spotify Wrapped Multiplayer Game
+version: 1.0.0

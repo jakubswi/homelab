@@ -1,0 +1,16 @@
+ingress:
+  host: wrapped.jakubswi.dev
+
+frontend:
+  image: ghcr.io/YOUR_GITHUB_USER/spotify-wrapped-ui
+  tag: latest
+  replicas: 2
+
+backend:
+  image: ghcr.io/YOUR_GITHUB_USER/spotify-wrapped-api
+  tag: latest
+  replicas: 1
+
+secrets:
+  awsSecretClientIdKey: SPOTIFY_CLIENT_ID
+  awsSecretClientSecretKey: SPOTIFY_CLIENT_SECRET
