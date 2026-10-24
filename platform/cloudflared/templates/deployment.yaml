@@ -19,6 +19,7 @@ data:
         originRequest:
           originServerName: wrapped.jakubswi.dev
           http2Origin: true
+          noTLSVerify: true
       # Catch-all rule: reject everything else!
       - service: http_status:404
 ---
