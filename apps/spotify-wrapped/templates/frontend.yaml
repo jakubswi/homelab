@@ -12,6 +12,7 @@ spec:
       labels:
         app: spotify-wrapped-frontend
     spec:
+      automountServiceAccountToken: false
       securityContext:
         runAsNonRoot: true
         runAsUser: 101
