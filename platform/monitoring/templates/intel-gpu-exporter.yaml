@@ -6,7 +6,6 @@ metadata:
   labels:
     app: intel-gpu-exporter
 spec:
-  automountServiceAccountToken: false
   selector:
     matchLabels:
       app: intel-gpu-exporter
@@ -15,6 +14,7 @@ spec:
       labels:
         app: intel-gpu-exporter
     spec:
+      automountServiceAccountToken: false
       hostNetwork: true
       containers:
         - name: intel-gpu-exporter
