@@ -4,7 +4,7 @@ ingress:
 frontend:
   image: ghcr.io/jakubswi/spotify-wrapped-game-frontend
   tag: latest
-  replicas: 2
+  replicas: 1
 
 backend:
   image: ghcr.io/jakubswi/spotify-wrapped-game-backend
