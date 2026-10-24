@@ -15,10 +15,10 @@ data:
           originServerName: jellyfin.jakubswi.dev
           http2Origin: true
       - hostname: wrapped.jakubswi.dev
-          service: https://traefik.traefik.svc.cluster.local:443
-          originRequest:
-            originServerName: wrapped.jakubswi.dev
-            http2Origin: true
+        service: https://traefik.traefik.svc.cluster.local:443
+        originRequest:
+          originServerName: wrapped.jakubswi.dev
+          http2Origin: true
       # Catch-all rule: reject everything else!
       - service: http_status:404
 ---
