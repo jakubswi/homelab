@@ -2,12 +2,12 @@ ingress:
   host: wrapped.jakubswi.dev
 
 frontend:
-  image: ghcr.io/YOUR_GITHUB_USER/spotify-wrapped-ui
+  image: ghcr.io/jakubswi/spotify-wrapped-game-frontend
   tag: latest
   replicas: 2
 
 backend:
-  image: ghcr.io/YOUR_GITHUB_USER/spotify-wrapped-api
+  image: ghcr.io/jakubswi/spotify-wrapped-game-backend
   tag: latest
   replicas: 1
 
