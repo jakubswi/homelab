@@ -23,7 +23,7 @@ spec:
         - name: frontend
           image: "{{ .Values.frontend.image }}:{{ .Values.frontend.tag }}"
           ports:
-            - containerPort: 80
+            - containerPort: 8080
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
@@ -37,5 +37,5 @@ spec:
   selector:
     app: spotify-wrapped-frontend
   ports:
-    - port: 80
-      targetPort: 80
+    - port: 8080
+      targetPort: 8080
