@@ -25,9 +25,20 @@ spec:
           ports:
             - containerPort: 8080
           securityContext:
+            readOnlyRootFilesystem: true
             allowPrivilegeEscalation: false
             capabilities:
               drop: ["ALL"]
+          volumeMounts:
+            - name: nginx-cache
+              mountPath: /var/cache/nginx
+            - name: nginx-pid
+              mountPath: /var/run
+      volumes:
+        - name: nginx-cache
+          emptyDir: {}
+        - name: nginx-pid
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
