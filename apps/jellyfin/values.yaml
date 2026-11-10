@@ -24,11 +24,11 @@ jellyfin:
   persistence:
     config:
       enabled: true
-      size: 15Gi
+      size: 10Gi
       storageClass: 'local-path'
     media:
       enabled: true
-      size: 400Gi
+      size: 200Gi
       storageClass: 'local-path'
 
   ingress:
