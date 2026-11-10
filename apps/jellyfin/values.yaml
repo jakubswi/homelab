@@ -28,7 +28,7 @@ jellyfin:
       storageClass: 'local-path'
     media:
       enabled: true
-      size: 200Gi
+      size: 450Gi
       storageClass: 'local-path'
 
   ingress:
