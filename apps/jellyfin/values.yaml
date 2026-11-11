@@ -11,7 +11,7 @@ jellyfin:
     fsGroup: 1000
     supplementalGroups:
       - 44
-      - 109
+      - 991
     seccompProfile:
       type: RuntimeDefault
 
