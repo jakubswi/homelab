@@ -11,7 +11,7 @@ jellyfin:
     fsGroup: 1000
     supplementalGroups:
       - 44
-      - 991
+      - 109
     seccompProfile:
       type: RuntimeDefault
 
@@ -24,11 +24,11 @@ jellyfin:
   persistence:
     config:
       enabled: true
-      size: 15Gi
+      size: 10Gi
       storageClass: 'local-path'
     media:
       enabled: true
-      size: 400Gi
+      size: 450Gi
       storageClass: 'local-path'
 
   ingress:
@@ -44,13 +44,12 @@ jellyfin:
           - path: /
             pathType: Prefix
 
-  volumes:
+  extraVolumes:
     - name: dri
       hostPath:
         path: /dev/dri
-        type: Directory
 
-  volumeMounts:
+  extraVolumeMounts:
     - name: dri
       mountPath: /dev/dri
 
