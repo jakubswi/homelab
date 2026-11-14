@@ -4,6 +4,8 @@ metadata:
   name: {{ .Release.Name }}-backend
 spec:
   replicas: {{ .Values.backend.replicas }}
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: spotify-wrapped-backend
@@ -21,14 +23,35 @@ spec:
           type: RuntimeDefault
       containers:
         - name: backend
-          image: "{{ .Values.backend.image }}:{{ .Values.backend.tag }}"
+          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
           ports:
             - containerPort: 5000
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 128Mi
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 5000
+            initialDelaySeconds: 2
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 5000
+            initialDelaySeconds: 5
+            periodSeconds: 20
           volumeMounts:
             - name: secrets-volume
               mountPath: /run/secrets
               readOnly: true
           securityContext:
+            readOnlyRootFilesystem: true
             allowPrivilegeEscalation: false
             capabilities:
               drop: ["ALL"]
