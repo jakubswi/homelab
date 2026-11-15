@@ -1,20 +1,17 @@
 ingress:
   host: wrapped.jakubswi.dev
-
 frontend:
   replicas: 1
   image:
     repository: ghcr.io/jakubswi/spotify-wrapped-game-frontend
-    tag: latest
+    tag: 2d9e0fef00755e01745da1d16030c95ee110862f
     pullPolicy: IfNotPresent
-
 backend:
   replicas: 1
   image:
     repository: ghcr.io/jakubswi/spotify-wrapped-game-backend
-    tag: latest
+    tag: 2d9e0fef00755e01745da1d16030c95ee110862f
     pullPolicy: IfNotPresent
-
 secrets:
   awsSecretClientIdKey: SPOTIFY_CLIENT_ID
   awsSecretClientSecretKey: SPOTIFY_CLIENT_SECRET
