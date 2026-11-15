@@ -178,16 +178,8 @@ jobs:
       - name: Render & Diff Manifests
         run: |
           curl -sSL https://github.com/homeport/dyff/releases/download/v1.9.2/dyff_1.9.2_linux_amd64.tar.gz | tar xz -C /usr/local/bin dyff
-          mkdir -p rendered-base rendered-pr
-          for dir in base pr; do
-            for chart in "$dir"/apps/* "$dir"/platform/*; do
-              name=$(basename "$chart")
-              helm dependency build "$chart" >/dev/null 2>&1 || true
-              helm template "$name" "$chart" --namespace "$name" --skip-tests \
-                --api-versions monitoring.coreos.com/v1 \
-                --api-versions monitoring.coreos.com/v1/ServiceMonitor > "rendered-$dir/$name.yaml"
-            done
-          done
+          ./pr/scripts/render-charts.sh rendered-base base
+          ./pr/scripts/render-charts.sh rendered-pr pr
           {
             echo "### GitOps Rendered Manifest Diff"
             echo "<details><summary>Click to expand Kubernetes resource changes</summary>"
