@@ -4,13 +4,13 @@ frontend:
   replicas: 1
   image:
     repository: ghcr.io/jakubswi/spotify-wrapped-game-frontend
-    tag: 663a1954cca26fb71f198577687070262adc0b01
+    tag: 21102d62f68dc7e2c245ea531da4f07185b57ff1
     pullPolicy: IfNotPresent
 backend:
   replicas: 1
   image:
     repository: ghcr.io/jakubswi/spotify-wrapped-game-backend
-    tag: 663a1954cca26fb71f198577687070262adc0b01
+    tag: 21102d62f68dc7e2c245ea531da4f07185b57ff1
     pullPolicy: IfNotPresent
 secrets:
   awsSecretClientIdKey: SPOTIFY_CLIENT_ID
