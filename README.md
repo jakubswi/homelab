@@ -1,6 +1,14 @@
 # Bare-Metal K3s GitOps Homelab
 
-Declarative, zero-trust Kubernetes homelab running on bare-metal Ubuntu LTS. Provisioned via **Ansible**, reconciled continuously by **ArgoCD (`ApplicationSet`)**, secured with **Cloudflare Zero Trust Tunnels**, **AWS Secrets Manager (ESO)**, and **Kubernetes NetworkPolicies**, and gated by an automated **DevSecOps CI/CD & Policy-as-Code pipeline**.
+[![GitOps CI & Policy Pipeline](https://github.com/jakubswi/homelab/actions/workflows/ci.yaml/badge.svg)](https://github.com/jakubswi/homelab/actions/workflows/ci.yaml)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=jakubswi_homelab&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=jakubswi_homelab)
+![Kubernetes](https://img.shields.io/badge/K3s-Bare--Metal-326CE5?logo=kubernetes&logoColor=white)
+![GitOps](https://img.shields.io/badge/ArgoCD-ApplicationSet-EF7B4D?logo=argo&logoColor=white)
+![Policy as Code](https://img.shields.io/badge/OPA%2FConftest-Rego%20v1-7D9199?logo=openpolicyagent&logoColor=white)
+
+Production-grade, zero-trust Kubernetes platform running on bare-metal Ubuntu LTS. Provisioned idempotently via **Ansible**, reconciled continuously by **ArgoCD (`ApplicationSet`), exposed with zero open router ports via **Cloudflare Zero Trust Tunnels** and **Split-Horizon DNS, and gated by a **DevSecOps & Policy-as-Code CI pipeline.
+
+> **End-to-End Portfolio Ecosystem:** This GitOps infrastructure repository serves as the continuous delivery target for [`spotify-wrapped-game`](https://github.com/jakubswi/spotify-wrapped-game), deploying immutable, commit-SHA-pinned container builds (`ghcr.io/jakubswi/spotify-wrapped-game-*`) behind zero-trust `NetworkPolicy` micro-segmentation.
 
 ---
 
@@ -60,6 +68,43 @@ flowchart LR
     ESO -->|Inject K8s Secrets| K8s
 ```
 
+## Live Cluster & Pipeline Showcase
+
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <a href="docs/images/argocd-topology.png">
+        <img src="docs/images/argocd-topology.png" alt="ArgoCD ApplicationSet Topology" />
+      </a>
+      <br />
+      <sub><strong>1. GitOps Reconciliation (ArgoCD):</strong> <code>ApplicationSet</code> auto-discovering and syncing <code>platform/*</code> and <code>apps/*</code> workloads with <code>ServerSideApply</code> and zero drift.</sub>
+    </td>
+    <td width="50%" valign="top">
+      <a href="docs/images/grafana-workloads.png">
+        <img src="docs/images/grafana-workloads.png" alt="Grafana Homelab Workloads Dashboard" />
+      </a>
+      <br />
+      <sub><strong>2. Observability (Grafana):</strong> Custom <code>homelab-workloads</code> dashboard tracking pod readiness, Cloudflare QUIC active connections, Traefik HTTP rates, and Intel iGPU metrics.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <a href="docs/images/github-security-sarif.png">
+        <img src="docs/images/github-security-sarif.png" alt="GitHub Security Trivy SARIF Integration" />
+      </a>
+      <br />
+      <sub><strong>3. DevSecOps Gate (Trivy SARIF):</strong> Automated Kubernetes misconfiguration scanning integrated directly into GitHub Code Scanning alerts.</sub>
+    </td>
+    <td width="50%" valign="top">
+      <a href="docs/images/pr-dyff-comment.png">
+        <img src="docs/images/pr-dyff-comment.png" alt="Automated dyff PR Manifest Diff" />
+      </a>
+      <br />
+      <sub><strong>4. GitOps PR Review (<code>dyff</code>):</strong> Rendered Kubernetes manifest diff posted automatically on pull requests before merge.</sub>
+    </td>
+  </tr>
+</table>
+
 ---
 
 ## Technology Stack
@@ -74,6 +119,17 @@ flowchart LR
 | **Workloads** | Jellyfin, Spotify Wrapped Game | Hardware-accelerated Jellyfin (`/dev/dri` Intel QuickSync) and a full-stack multiplayer Spotify guessing game (Go backend + Angular frontend) |
 | **Observability** | kube-prometheus-stack, intel-gpu-exporter | Prometheus, Alertmanager, Grafana (custom workload & community dashboards), Intel iGPU metrics DaemonSet, and custom `PrometheusRule` alerts |
 | **DevSecOps CI/CD** | GitHub Actions, OPA/Conftest, Trivy, SonarCloud, Renovate | SHA-pinned Actions, Gitleaks, Trivy SARIF + GitHub Security integration, SonarCloud SAST, `kubeconform` CRD validation, Rego v1 policy gates, `dyff` PR diffs |
+
+---
+
+## Architectural Decisions & Trade-Offs
+
+| Decision | Chosen Approach | Engineering Rationale |
+| :--- | :--- | :--- |
+| **Ingress & Load Balancing** | Disable K3s built-in `traefik` & `servicelb`; deploy MetalLB + Traefik via Helm | Prevents imperative manifest drift outside ArgoCD and unlocks deterministic L2 ARP static IPs (`192.168.0.240–250`) for DNS and Ingress. |
+| **External vs. Internal Routing** | Cloudflare QUIC Tunnel (WAN) + AdGuard Split-Horizon DNS (LAN) | Eliminates router port-forwarding and residential dynamic-IP issues while preventing WAN hairpin latency for local clients streaming high-bitrate Jellyfin media. |
+| **CRD Drift Reconciliation** | ArgoCD `ServerSideApply=true` + targeted `ignoreDifferences` rules | Avoids perpetual `OutOfSync` loops caused by `cert-manager` and `external-secrets` admission webhooks mutating `caBundle` fields at runtime. |
+| **Container & Cluster Hardening** | Strict `SecurityContext` + Rego v1 policies + audited `.trivyignore` | Enforces non-root, read-only filesystems and `ExternalSecret` usage across workloads while explicitly documenting unavoidable host-level exceptions (MetalLB L2 speaker, `/dev/dri` iGPU metrics). |
 
 ---
 
@@ -169,11 +225,14 @@ conftest test .rendered/*.yaml --policy policy/
 make ansible-deps
 make provision
 
-# 2. Inject the single bootstrap IAM credential for External Secrets Operator
+# 2. Inject the single bootstrap IAM credential for External Secrets Operator (without logging to shell history)
+read -rsp "AWS Access Key ID: " AWS_KEY && echo
+read -rsp "AWS Secret Access Key: " AWS_SECRET && echo
 kubectl create namespace external-secrets
 kubectl create secret generic awssm-secret -n external-secrets \
-  --from-literal=access-key="<AWS_ACCESS_KEY_ID>" \
-  --from-literal=secret-access-key="<AWS_SECRET_ACCESS_KEY>"
+  --from-literal=access-key="$AWS_KEY" \
+  --from-literal=secret-access-key="$AWS_SECRET"
+unset AWS_KEY AWS_SECRET
 
 # 3. Bootstrap ArgoCD; ApplicationSet reconciles all platform/* and apps/* workloads
 make bootstrap
