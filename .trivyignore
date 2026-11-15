@@ -25,3 +25,6 @@ AVD-KSV-0121
 
 # Upstream Helm charts (external-secrets, metallb-speaker, adguard-home) manage pod SecurityContext internally
 AVD-KSV-0118
+
+# Upstream subchart containers (metallb-speaker FRR sidecars, grafana sidecars, adguard-home) manage readOnlyRootFilesystem internally
+AVD-KSV-0014
