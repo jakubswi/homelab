@@ -38,7 +38,6 @@ jobs:
             scripts:
               - 'scripts/**'
               - 'bootstrap/**'
-              - 'dump_repo.sh'
 
   security-scan:
     name: Secrets, SAST & Misconfig Scan
@@ -55,7 +54,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run Trivy Misconfiguration Scan (SARIF)
-        uses: aquasecurity/trivy-action@dc5a429b52fcf669ce959baa2c2dd26090d2a6c4 # v0.32.0
+        uses: aquasecurity/trivy-action@0.36.0
         with:
           scan-type: 'config'
           scan-ref: '.'
@@ -65,8 +64,8 @@ jobs:
           exit-code: '1'
 
       - name: Upload Trivy SARIF to GitHub Security
-        if: always()
-        uses: github/codeql-action/upload-sarif@9418214df1f2c4b8128c770156c409013b07d6b9 # v3
+        if: always() && hashFiles('trivy-results.sarif') != ''
+        uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4
         with:
           sarif_file: 'trivy-results.sarif'
 
@@ -85,7 +84,7 @@ jobs:
 
       - name: Run ShellCheck
         if: needs.changes.outputs.scripts == 'true'
-        run: shellcheck scripts/*.sh bootstrap/*.sh dump_repo.sh
+        run: git ls-files '*.sh' | xargs -r shellcheck
 
       - name: Run Ansible Lint & Syntax Check
         if: needs.changes.outputs.ansible == 'true'
@@ -125,8 +124,11 @@ jobs:
         run: |
           mkdir -p /tmp/rendered
           for chart in apps/* platform/*; do
-            helm dependency build "$chart" 2>/dev/null || true
-            helm template "$(basename "$chart")" "$chart" --skip-tests > "/tmp/rendered/$(basename "$chart").yaml"
+            name=$(basename "$chart")
+            helm dependency build "$chart" >/dev/null 2>&1 || true
+            helm template "$name" "$chart" --namespace "$name" --skip-tests \
+              --api-versions monitoring.coreos.com/v1 \
+              --api-versions monitoring.coreos.com/v1/ServiceMonitor > "/tmp/rendered/${name}.yaml"
           done
           conftest test /tmp/rendered/*.yaml --policy policy/
 
@@ -157,20 +159,22 @@ jobs:
           curl -sSL https://github.com/homeport/dyff/releases/download/v1.9.2/dyff_1.9.2_linux_amd64.tar.gz | tar xz -C /usr/local/bin dyff
           mkdir -p rendered-base rendered-pr
           for dir in base pr; do
-          for chart in "$dir"/apps/* "$dir"/platform/*; do
-           name=$(basename "$chart")
-           helm dependency build "$chart" >/dev/null 2>&1 || true
-           helm template "$name" "$chart" --skip-tests > "rendered-$dir/$name.yaml"
-          done
+            for chart in "$dir"/apps/* "$dir"/platform/*; do
+              name=$(basename "$chart")
+              helm dependency build "$chart" >/dev/null 2>&1 || true
+              helm template "$name" "$chart" --namespace "$name" --skip-tests \
+                --api-versions monitoring.coreos.com/v1 \
+                --api-versions monitoring.coreos.com/v1/ServiceMonitor > "rendered-$dir/$name.yaml"
+            done
           done
           {
-          echo "### GitOps Rendered Manifest Diff"
-          echo "<details><summary>Click to expand Kubernetes resource changes</summary>"
-          echo ""
-          echo '```diff'
-          dyff between --omit-header rendered-base rendered-pr || true
-          echo '```'
-          echo "</details>"
+            echo "### GitOps Rendered Manifest Diff"
+            echo "<details><summary>Click to expand Kubernetes resource changes</summary>"
+            echo ""
+            echo '```diff'
+            dyff between --omit-header rendered-base rendered-pr || true
+            echo '```'
+            echo "</details>"
           } > comment.md
 
       - name: Comment Diff on PR
