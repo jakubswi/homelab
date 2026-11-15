@@ -63,7 +63,11 @@ jobs:
           mkdir -p .rendered
           for chart in apps/* platform/*; do
             name=$(basename "$chart")
-            helm dependency build "$chart" >/dev/null 2>&1 || true
+            if [ -f "$chart/Chart.lock" ]; then
+              helm dependency build "$chart"
+            else
+              helm dependency update "$chart"
+            fi
             helm template "$name" "$chart" --namespace "$name" --skip-tests \
               --api-versions monitoring.coreos.com/v1 \
               --api-versions monitoring.coreos.com/v1/ServiceMonitor > ".rendered/${name}.yaml"
