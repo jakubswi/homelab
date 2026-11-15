@@ -1,4 +1,11 @@
+cat << 'EOF' > .trivyignore
 # Intel iGPU hardware transcoding & telemetry requires /dev/dri hostPath and privileged exporter access
 AVD-KSV-0001
 AVD-KSV-0009
+AVD-KSV-0017
 AVD-KSV-0023
+
+# Upstream DaemonSets (kube-prometheus-stack node-exporter & metallb speaker) require hostPID and network capabilities
+AVD-KSV-0010
+AVD-KSV-0022
+EOF

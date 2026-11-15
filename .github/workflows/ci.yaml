@@ -39,7 +39,7 @@ jobs:
               - 'scripts/**'
               - 'bootstrap/**'
 
-  security-scan:
+  ssecurity-scan:
     name: Secrets, SAST & Misconfig Scan
     runs-on: ubuntu-latest
     steps:
@@ -53,21 +53,49 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Setup Helm
+        uses: azure/setup-helm@1a275c3b69536ee54be43f2070a358922e12c8d4 # v4
+        with:
+          version: 'v3.16.3'
+
+      - name: Render Kubernetes Manifests for Scanning
+        run: |
+          mkdir -p .rendered
+          for chart in apps/* platform/*; do
+            name=$(basename "$chart")
+            helm dependency build "$chart" >/dev/null 2>&1 || true
+            helm template "$name" "$chart" --namespace "$name" --skip-tests \
+              --api-versions monitoring.coreos.com/v1 \
+              --api-versions monitoring.coreos.com/v1/ServiceMonitor > ".rendered/${name}.yaml"
+          done
+          cp clusters/home/*.yaml .rendered/
+
       - name: Run Trivy Misconfiguration Scan (SARIF)
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           scan-type: 'config'
-          scan-ref: '.'
+          scan-ref: '.rendered'
           format: 'sarif'
           output: 'trivy-results.sarif'
           severity: 'CRITICAL,HIGH'
-          exit-code: '1'
+          exit-code: '0'
+          trivy-args: '--skip-version-check'
 
       - name: Upload Trivy SARIF to GitHub Security
         if: always() && hashFiles('trivy-results.sarif') != ''
         uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4
         with:
           sarif_file: 'trivy-results.sarif'
+
+      - name: Enforce Trivy Misconfiguration Gate
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: 'config'
+          scan-ref: '.rendered'
+          format: 'table'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '1'
+          trivy-args: '--skip-version-check'
 
       - name: SonarCloud / SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@689fb39b34b9aa95ebc5f8f119343ddd51542402 # v4
