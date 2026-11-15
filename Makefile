@@ -9,9 +9,6 @@ export KUBECONFIG := $(CURDIR)/.kubeconfig.yaml
 help: ## Show this help
 > @grep -E '^[a-zA-Z_-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-20s %s\n", $$1, $$2}'
 
-configure: ## Set placeholders: make configure DOMAIN=mydomain.tld GITHUB_USER=me [LAN=192.168.1]
-> @bash scripts/configure.sh "$(DOMAIN)" "$(GITHUB_USER)" "$(LAN)"
-
 ansible-deps: ## Install required Ansible collections
 > cd ansible && ansible-galaxy collection install -r requirements.yml
 
