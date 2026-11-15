@@ -60,18 +60,7 @@ jobs:
 
       - name: Render Kubernetes Manifests for Scanning
         run: |
-          mkdir -p .rendered
-          for chart in apps/* platform/*; do
-            name=$(basename "$chart")
-            if [ -f "$chart/Chart.lock" ]; then
-              helm dependency build "$chart"
-            else
-              helm dependency update "$chart"
-            fi
-            helm template "$name" "$chart" --namespace "$name" --skip-tests \
-              --api-versions monitoring.coreos.com/v1 \
-              --api-versions monitoring.coreos.com/v1/ServiceMonitor > ".rendered/${name}.yaml"
-          done
+          ./scripts/render-charts.sh .rendered
           cp clusters/home/*.yaml .rendered/
 
       - name: Run Trivy Misconfiguration Scan (SARIF)
