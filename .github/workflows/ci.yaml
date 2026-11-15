@@ -1,43 +1,180 @@
-name: GitOps CI & Security Scan
+name: GitOps CI, Security & Policy Pipeline
 
 on:
   pull_request:
     branches: [master]
   push:
     branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+  security-events: write
 
 jobs:
-  lint-and-validate:
-    name: Validate Helm & K8s Manifests
+  changes:
+    name: Detect Changed Paths
+    runs-on: ubuntu-latest
+    outputs:
+      helm: ${{ steps.filter.outputs.helm }}
+      ansible: ${{ steps.filter.outputs.ansible }}
+      scripts: ${{ steps.filter.outputs.scripts }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: dorny/paths-filter@0e4a8c6effa4802afeda77dc8d303f8176d7dfad # v3
+        id: filter
+        with:
+          filters: |
+            helm:
+              - 'apps/**'
+              - 'platform/**'
+              - 'clusters/**'
+              - 'scripts/validate.sh'
+              - 'scripts/helm-deps.sh'
+              - 'policy/**'
+            ansible:
+              - 'ansible/**'
+            scripts:
+              - 'scripts/**'
+              - 'bootstrap/**'
+              - 'dump_repo.sh'
+
+  security-scan:
+    name: Secrets, SAST & Misconfig Scan
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0
 
       - name: Run Gitleaks Secret Scanner
-        uses: gitleaks/gitleaks-action@v2
+        uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run Trivy Misconfiguration Scan (SARIF)
+        uses: aquasecurity/trivy-action@dc5a429b52fcf669ce959baa2c2dd26090d2a6c4 # v0.32.0
+        with:
+          scan-type: 'config'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '1'
+
+      - name: Upload Trivy SARIF to GitHub Security
+        if: always()
+        uses: github/codeql-action/upload-sarif@9418214df1f2c4b8128c770156c409013b07d6b9 # v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: SonarCloud / SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@689fb39b34b9aa95ebc5f8f119343ddd51542402 # v4
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  lint-ansible-and-scripts:
+    name: Lint Ansible & Shell Scripts
+    needs: changes
+    if: needs.changes.outputs.ansible == 'true' || needs.changes.outputs.scripts == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Run ShellCheck
+        if: needs.changes.outputs.scripts == 'true'
+        run: shellcheck scripts/*.sh bootstrap/*.sh dump_repo.sh
+
+      - name: Run Ansible Lint & Syntax Check
+        if: needs.changes.outputs.ansible == 'true'
+        run: |
+          pip install ansible-lint
+          ansible-lint ansible/
+          ansible-playbook -i ansible/inventory/hosts.ini ansible/site.yml --syntax-check
+
+  validate-helm-and-policy:
+    name: Render Charts, Kubeconform & Policy Check
+    needs: changes
+    if: needs.changes.outputs.helm == 'true' || github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Run yamllint
         run: |
           pip install yamllint
           yamllint .
 
-      - name: Install Helm & kubeconform
+      - name: Setup Helm
+        uses: azure/setup-helm@1a275c3b69536ee54be43f2070a358922e12c8d4 # v4
+        with:
+          version: 'v3.16.3'
+
+      - name: Install kubeconform & conftest
         run: |
-          curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
-          curl -L https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz | tar xz -C /usr/local/bin kubeconform
+          curl -sSL https://github.com/yannh/kubeconform/releases/download/v0.6.7/kubeconform-linux-amd64.tar.gz | tar xz -C /usr/local/bin kubeconform
+          curl -sSL https://github.com/open-policy-agent/conftest/releases/download/v0.56.0/conftest_0.56.0_Linux_x86_64.tar.gz | tar xz -C /usr/local/bin conftest
 
       - name: Render Charts & Validate Schemas
         run: bash scripts/validate.sh
 
-      - name: Run Trivy Misconfiguration Scan
-        uses: aquasecurity/trivy-action@master
+      - name: Enforce OPA/Conftest Policies
+        if: hashFiles('policy/*.rego') != ''
+        run: |
+          mkdir -p /tmp/rendered
+          for chart in apps/* platform/*; do
+            helm dependency build "$chart" 2>/dev/null || true
+            helm template "$(basename "$chart")" "$chart" --skip-tests > "/tmp/rendered/$(basename "$chart").yaml"
+          done
+          conftest test /tmp/rendered/*.yaml --policy policy/
+
+  gitops-pr-diff:
+    name: Post Rendered Manifest Diff on PR
+    needs: [changes, validate-helm-and-policy]
+    if: github.event_name == 'pull_request' && needs.changes.outputs.helm == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
-          scan-type: 'config'
-          scan-ref: '.'
-          severity: 'CRITICAL,HIGH'
-          exit-code: '0'
+          path: pr
+
+      - name: Checkout Base branch
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.base_ref }}
+          path: base
+
+      - name: Setup Helm & dyff
+        uses: azure/setup-helm@1a275c3b69536ee54be43f2070a358922e12c8d4 # v4
+        with:
+          version: 'v3.16.3'
+
+      - name: Render & Diff Manifests
+        run: |
+          curl -sSL https://github.com/homeport/dyff/releases/download/v1.9.2/dyff_1.9.2_linux_amd64.tar.gz | tar xz -C /usr/local/bin dyff
+          mkdir -p rendered-base rendered-pr
+          for dir in base pr; do
+          for chart in "$dir"/apps/* "$dir"/platform/*; do
+           name=$(basename "$chart")
+           helm dependency build "$chart" >/dev/null 2>&1 || true
+           helm template "$name" "$chart" --skip-tests > "rendered-$dir/$name.yaml"
+          done
+          done
+          {
+          echo "### GitOps Rendered Manifest Diff"
+          echo "<details><summary>Click to expand Kubernetes resource changes</summary>"
+          echo ""
+          echo '```diff'
+          dyff between --omit-header rendered-base rendered-pr || true
+          echo '```'
+          echo "</details>"
+          } > comment.md
+
+      - name: Comment Diff on PR
+        uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # v2
+        with:
+          header: gitops-diff
+          path: comment.md

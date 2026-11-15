@@ -1,0 +1,4 @@
+# Intel iGPU hardware transcoding & telemetry requires /dev/dri hostPath and privileged exporter access
+AVD-KSV-0001
+AVD-KSV-0009
+AVD-KSV-0023
