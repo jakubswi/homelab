@@ -1,11 +1,27 @@
-cat << 'EOF' > .trivyignore
-# Intel iGPU hardware transcoding & telemetry requires /dev/dri hostPath and privileged exporter access
+# Intel iGPU hardware transcoding (/dev/dri) & GPU telemetry DaemonSet
 AVD-KSV-0001
 AVD-KSV-0009
 AVD-KSV-0017
 AVD-KSV-0023
 
-# Upstream DaemonSets (kube-prometheus-stack node-exporter & metallb speaker) require hostPID and network capabilities
+# Cluster-wide operators require Secrets RBAC (cert-manager, ESO, Traefik TLS, Prometheus/Grafana)
+AVD-KSV-0041
+
+# Admission webhook controllers require mutating/validating webhook RBAC for CA bundle injection
+AVD-KSV-0114
+
+# Prometheus Operator requires full CRD lifecycle verbs on monitoring.coreos.com resources
+AVD-KSV-0045
+AVD-KSV-0056
+
+# MetalLB L2/BGP speaker DaemonSet requires host networking, SYS_ADMIN, and NET_RAW capabilities
+AVD-KSV-0005
+AVD-KSV-0119
+
+# Upstream DaemonSets (node-exporter, metallb-speaker) require hostPID and host /proc, /sys mounts
 AVD-KSV-0010
 AVD-KSV-0022
-EOF
+AVD-KSV-0121
+
+# Upstream Helm charts (external-secrets, metallb-speaker, adguard-home) manage pod SecurityContext internally
+AVD-KSV-0118
