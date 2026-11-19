@@ -10,15 +10,15 @@ KC=(kubeconform -strict -ignore-missing-schemas -summary
 
 fail=0
 for dir in platform/* apps/* clusters/home bootstrap/argocd; do
-  [ -d "$dir" ] || continue
+  [[ -d "$dir" ]] || continue
   name=$(basename "$dir")
-  if [ -f "$dir/Chart.yaml" ]; then
+  if [[ -f "$dir/Chart.yaml" ]]; then
     echo "==> $dir"
     helm dependency update "$dir" >/dev/null
     out=$(helm template "$name" "$dir" --namespace "$name" --include-crds \
       --api-versions monitoring.coreos.com/v1 \
       --api-versions monitoring.coreos.com/v1/ServiceMonitor) || { fail=1; continue; }
-  elif [ -f "$dir/kustomization.yaml" ]; then
+  elif [[ -f "$dir/kustomization.yaml" ]]; then
     echo "==> $dir"
     out=$(kubectl kustomize "$dir") || { fail=1; continue; }
   elif compgen -G "$dir/*.yaml" >/dev/null; then

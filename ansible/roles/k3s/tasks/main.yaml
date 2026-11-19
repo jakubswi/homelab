@@ -4,14 +4,14 @@
   ansible.builtin.file:
     path: /etc/rancher/k3s
     state: directory
-    mode: '0755'
+    mode: '0750'
   become: true
 
 - name: Deploy k3s configuration
   ansible.builtin.template:
     src: config.yaml.j2
     dest: /etc/rancher/k3s/config.yaml
-    mode: '0644'
+    mode: '0640'
   become: true
   notify: Restart k3s
 
@@ -19,7 +19,7 @@
   ansible.builtin.get_url:
     url: https://get.k3s.io
     dest: /tmp/k3s-install.sh
-    mode: '0755'
+    mode: '0750'
   become: true
 
 - name: Execute k3s installation script

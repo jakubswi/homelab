@@ -67,9 +67,11 @@ spec:
             requests:
               cpu: 50m
               memory: 64Mi
+              ephemeral-storage: 32Mi
             limits:
               cpu: 250m
               memory: 128Mi
+              ephemeral-storage: 128Mi
           livenessProbe:
             httpGet:
               path: /ready
