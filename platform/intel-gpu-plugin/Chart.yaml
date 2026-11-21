@@ -1,0 +1,6 @@
+apiVersion: v2
+name: intel-gpu-plugin
+description: Intel GPU Device Plugin for K3s hardware transcoding
+type: application
+version: 0.1.0
+appVersion: "0.30.0"

@@ -57,15 +57,10 @@ jellyfin:
             pathType: Prefix
 
   volumes:
-    - name: dri
-      hostPath:
-        path: /dev/dri
     - name: tmp
       emptyDir: {}
 
   volumeMounts:
-    - name: dri
-      mountPath: /dev/dri
     - name: tmp
       mountPath: /tmp
 
@@ -73,6 +68,8 @@ jellyfin:
     requests:
       cpu: 500m
       memory: 2Gi
+    limits:
+      gpu.intel.com/i915: "1"
 
   metrics:
     enabled: true

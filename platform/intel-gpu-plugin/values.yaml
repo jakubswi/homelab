@@ -1,0 +1,14 @@
+image:
+  repository: intel/intel-gpu-plugin
+  tag: "0.30.0"
+  pullPolicy: IfNotPresent
+
+sharedDevNum: 3
+
+resources:
+  requests:
+    cpu: 10m
+    memory: 20Mi
+  limits:
+    cpu: 100m
+    memory: 64Mi
