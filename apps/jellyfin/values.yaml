@@ -21,8 +21,6 @@ jellyfin:
     capabilities:
       drop:
         - ALL
-      add:
-        - SYS_PTRACE
 
   jellyfin:
     env:
@@ -34,6 +32,16 @@ jellyfin:
         value: "1"
       - name: DOTNET_CreateDumpVerboseDiagnostics
         value: "1"
+      - name: DOTNET_DbgEnableMiniDump
+        value: "1"
+      - name: DOTNET_DbgMiniDumpType
+        value: "2"
+      - name: DOTNET_DbgMiniDumpName
+        value: "/tmp/jellyfin-crash-%p.dmp"
+      - name: DOTNET_ReadyToRun
+        value: "0"
+      - name: DOTNET_TieredCompilation
+        value: "0"
 
   persistence:
     config:
@@ -41,9 +49,7 @@ jellyfin:
       size: 10Gi
       storageClass: 'local-path'
     media:
-      enabled: true
-      size: 450Gi
-      storageClass: 'local-path'
+      enabled: false
 
   ingress:
     enabled: true
@@ -63,12 +69,18 @@ jellyfin:
         path: /dev/dri
     - name: tmp
       emptyDir: {}
+    - name: media
+      hostPath:
+        path: /mnt/media
+        type: DirectoryOrCreate
 
   volumeMounts:
     - name: dri
       mountPath: /dev/dri
     - name: tmp
       mountPath: /tmp
+    - name: media
+      mountPath: /media
 
   resources:
     requests:
