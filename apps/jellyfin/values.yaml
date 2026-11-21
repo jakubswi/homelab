@@ -28,6 +28,8 @@ jellyfin:
         value: /tmp
       - name: XDG_CACHE_HOME
         value: /cache
+      - name: DOTNET_EnableCrashReport
+        value: "1"
 
   persistence:
     config:
