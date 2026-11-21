@@ -21,6 +21,8 @@ jellyfin:
     capabilities:
       drop:
         - ALL
+      add:
+        - SYS_PTRACE
 
   jellyfin:
     env:
@@ -29,6 +31,8 @@ jellyfin:
       - name: XDG_CACHE_HOME
         value: /cache
       - name: DOTNET_EnableCrashReport
+        value: "1"
+      - name: DOTNET_CreateDumpVerboseDiagnostics
         value: "1"
 
   persistence:
