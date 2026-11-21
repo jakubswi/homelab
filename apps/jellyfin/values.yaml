@@ -22,6 +22,13 @@ jellyfin:
       drop:
         - ALL
 
+  jellyfin:
+    env:
+      - name: HOME
+        value: /tmp
+      - name: XDG_CACHE_HOME
+        value: /cache
+
   persistence:
     config:
       enabled: true
@@ -44,27 +51,23 @@ jellyfin:
           - path: /
             pathType: Prefix
 
-  extraVolumes:
+  volumes:
     - name: dri
       hostPath:
         path: /dev/dri
     - name: tmp
       emptyDir: {}
-    - name: cache
-      emptyDir: {}
 
-  extraVolumeMounts:
+  volumeMounts:
     - name: dri
       mountPath: /dev/dri
     - name: tmp
       mountPath: /tmp
-    - name: cache
-      mountPath: /cache
 
   resources:
     requests:
       cpu: 500m
-      memory: 1Gi
+      memory: 2Gi
 
   metrics:
     enabled: true
