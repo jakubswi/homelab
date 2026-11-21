@@ -49,7 +49,9 @@ jellyfin:
       size: 10Gi
       storageClass: 'local-path'
     media:
-      enabled: false
+      enabled: true
+      type: hostPath
+      hostPath: /mnt/media
 
   ingress:
     enabled: true
@@ -69,18 +71,12 @@ jellyfin:
         path: /dev/dri
     - name: tmp
       emptyDir: {}
-    - name: media
-      hostPath:
-        path: /mnt/media
-        type: DirectoryOrCreate
 
   volumeMounts:
     - name: dri
       mountPath: /dev/dri
     - name: tmp
       mountPath: /tmp
-    - name: media
-      mountPath: /media
 
   resources:
     requests:
