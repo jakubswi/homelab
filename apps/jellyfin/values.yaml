@@ -28,20 +28,6 @@ jellyfin:
         value: /tmp
       - name: XDG_CACHE_HOME
         value: /cache
-      - name: DOTNET_EnableCrashReport
-        value: "1"
-      - name: DOTNET_CreateDumpVerboseDiagnostics
-        value: "1"
-      - name: DOTNET_DbgEnableMiniDump
-        value: "1"
-      - name: DOTNET_DbgMiniDumpType
-        value: "2"
-      - name: DOTNET_DbgMiniDumpName
-        value: "/tmp/jellyfin-crash-%p.dmp"
-      - name: DOTNET_ReadyToRun
-        value: "0"
-      - name: DOTNET_TieredCompilation
-        value: "0"
 
   persistence:
     config:
@@ -52,6 +38,7 @@ jellyfin:
       enabled: true
       type: hostPath
       hostPath: /mnt/media
+      readOnly: false
 
   ingress:
     enabled: true
