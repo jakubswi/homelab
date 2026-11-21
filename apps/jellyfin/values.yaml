@@ -38,7 +38,6 @@ jellyfin:
     annotations:
       traefik.ingress.kubernetes.io/router.entrypoints: websecure
       traefik.ingress.kubernetes.io/router.tls: "true"
-      traefik.ingress.kubernetes.io/router.middlewares: traefik-rate-limit@kubernetescrd,traefik-security-headers@kubernetescrd
     hosts:
       - host: jellyfin.jakubswi.dev
         paths:
@@ -49,10 +48,18 @@ jellyfin:
     - name: dri
       hostPath:
         path: /dev/dri
+    - name: tmp
+      emptyDir: {}
+    - name: cache
+      emptyDir: {}
 
   extraVolumeMounts:
     - name: dri
       mountPath: /dev/dri
+    - name: tmp
+      mountPath: /tmp
+    - name: cache
+      mountPath: /cache
 
   resources:
     requests:
