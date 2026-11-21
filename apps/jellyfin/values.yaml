@@ -16,6 +16,8 @@ jellyfin:
       - 991
     seccompProfile:
       type: RuntimeDefault
+    appArmorProfile:
+      type: Unconfined
 
   securityContext:
     allowPrivilegeEscalation: false
