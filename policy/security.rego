@@ -4,10 +4,11 @@ import rego.v1
 
 workload_kinds := {"Deployment", "StatefulSet", "DaemonSet"}
 
-# Internal chart-rendered config secrets that contain routing/scrape configs rather than credentials
+# Internal chart-rendered config secrets that contain routing/scrape/app configs rather than credentials
 allowed_config_secrets := {
 	"alertmanager-monitoring-kube-prometheus-alertmanager",
 	"monitoring-kube-prometheus-prometheus-scrape-confg",
+	"authentik",
 }
 
 # Deny plaintext Secrets containing data (enforce ExternalSecrets Operator)
@@ -21,10 +22,16 @@ deny contains msg if {
 	msg := sprintf("Plaintext Secret '%s' is forbidden. Use an ExternalSecret resource instead.", [input.metadata.name])
 }
 
-# Allow empty placeholder secrets populated at runtime by admission webhook controllers
+# Allow empty placeholder secrets populated at runtime by admission webhook controllers or upstream charts
 is_empty_secret(secret) if {
-	count(object.get(secret, "data", {})) == 0
-	count(object.get(secret, "stringData", {})) == 0
+	all_empty_values(object.get(secret, "data", {}))
+	all_empty_values(object.get(secret, "stringData", {}))
+}
+
+all_empty_values(obj) if {
+	every _, v in obj {
+		v == ""
+	}
 }
 
 # Deny containers using :latest or omitting an explicit tag
@@ -42,22 +49,4 @@ has_mutable_tag(image) if {
 has_mutable_tag(image) if {
 	not contains(image, ":")
 	not contains(image, "@sha256:")
-}
-# Allow empty placeholder secrets populated at runtime by admission webhook controllers or upstream charts
-is_empty_secret(secret) if {
-	all_empty_values(object.get(secret, "data", {}))
-	all_empty_values(object.get(secret, "stringData", {}))
-}
-
-all_empty_values(obj) if {
-	every _, v in obj {
-		v == ""
-	}
-}
-
-# Internal chart-rendered config secrets that contain routing/scrape/app configs rather than credentials
-allowed_config_secrets := {
-	"alertmanager-monitoring-kube-prometheus-alertmanager",
-	"monitoring-kube-prometheus-prometheus-scrape-confg",
-	"authentik",
 }
