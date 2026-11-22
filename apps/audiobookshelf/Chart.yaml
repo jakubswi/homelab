@@ -1,0 +1,6 @@
+apiVersion: v2
+name: audiobookshelf
+description: Self-hosted audiobook and podcast server
+type: application
+version: 1.0.0
+appVersion: "2.33.2"
