@@ -29,6 +29,16 @@ data:
         originRequest:
           originServerName: auth.jakubswi.dev
           http2Origin: true
+      - hostname: argocd.jakubswi.dev
+        service: https://traefik.traefik.svc.cluster.local:443
+        originRequest:
+          originServerName: argocd.jakubswi.dev
+          http2Origin: true
+      - hostname: grafana.jakubswi.dev
+        service: https://traefik.traefik.svc.cluster.local:443
+        originRequest:
+          originServerName: grafana.jakubswi.dev
+          http2Origin: true
       # Catch-all rule: reject everything else!
       - service: http_status:404
 ---
