@@ -20,6 +20,10 @@ vaultwarden:
   storage:
     data:
       name: "vaultwarden-data"
+      size: "15Gi"
+      class: ""
+      accessMode: "ReadWriteOnce"
+      keepPvc: true
 
   ingress:
     enabled: true
