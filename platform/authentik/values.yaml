@@ -84,6 +84,8 @@ authentik:
       podSecurityContext:
         enabled: true
         fsGroup: 999
+        appArmorProfile:
+          type: Unconfined
         seccompProfile:
           type: RuntimeDefault
       containerSecurityContext:
