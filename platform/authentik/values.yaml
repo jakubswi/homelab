@@ -73,10 +73,6 @@ authentik:
 
   postgresql:
     enabled: true
-    image:
-      registry: docker.io
-      repository: bitnamilegacy/postgresql
-      tag: 17.6.0-debian-12-r4
     auth:
       username: authentik
       database: authentik
@@ -87,12 +83,13 @@ authentik:
     primary:
       podSecurityContext:
         enabled: true
-        fsGroup: 1001
+        fsGroup: 999
         seccompProfile:
           type: RuntimeDefault
       containerSecurityContext:
         enabled: true
-        runAsUser: 1001
+        runAsUser: 999
+        runAsGroup: 999
         runAsNonRoot: true
         allowPrivilegeEscalation: false
         capabilities:
