@@ -43,3 +43,14 @@ has_mutable_tag(image) if {
 	not contains(image, ":")
 	not contains(image, "@sha256:")
 }
+# Allow empty placeholder secrets populated at runtime by admission webhook controllers or upstream charts
+is_empty_secret(secret) if {
+	all_empty_values(object.get(secret, "data", {}))
+	all_empty_values(object.get(secret, "stringData", {}))
+}
+
+all_empty_values(obj) if {
+	every _, v in obj {
+		v == ""
+	}
+}

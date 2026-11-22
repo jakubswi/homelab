@@ -1,0 +1,55 @@
+vaultwarden:
+  image:
+    registry: docker.io
+    repository: vaultwarden/server
+    tag: "1.37.5-alpine"
+    pullPolicy: IfNotPresent
+
+  domain: "https://vaultwarden.jakubswi.dev"
+
+  signupsAllowed: false
+  invitationsAllowed: true
+  showPasswordHint: false
+  websocket:
+    enabled: true
+
+  adminToken:
+    existingSecret: vaultwarden-secrets
+    existingSecretKey: ADMIN_TOKEN
+
+  storage:
+    data:
+      existingClaim: "vaultwarden-data"
+
+  ingress:
+    enabled: true
+    class: "traefik"
+    hostname: vaultwarden.jakubswi.dev
+    tls: false
+    nginx: false
+    additionalAnnotations:
+      traefik.ingress.kubernetes.io/router.entrypoints: websecure
+      traefik.ingress.kubernetes.io/router.tls: "true"
+      traefik.ingress.kubernetes.io/router.middlewares: traefik-rate-limit@kubernetescrd,traefik-security-headers@kubernetescrd
+
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    seccompProfile:
+      type: RuntimeDefault
+
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi

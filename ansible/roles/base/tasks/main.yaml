@@ -56,3 +56,10 @@
     size: +100%FREE
     resizefs: true
   become: true
+
+- name: Blacklist simpledrm to prevent /dev/dri/by-path collision with Intel i915
+  ansible.builtin.lineinfile:
+    path: /etc/default/grub
+    regexp: '^GRUB_CMDLINE_LINUX_DEFAULT='
+    line: 'GRUB_CMDLINE_LINUX_DEFAULT="initcall_blacklist=simpledrm_platform_driver_init"'
+  notify: Update grub

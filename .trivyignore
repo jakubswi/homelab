@@ -28,3 +28,6 @@ AVD-KSV-0118
 
 # Upstream subchart containers (metallb-speaker FRR sidecars, grafana sidecars, adguard-home) manage readOnlyRootFilesystem internally
 AVD-KSV-0014
+
+# Upstream vaultwarden ConfigMap renders boolean flag SHOW_PASSWORD_HINT="false" (false positive on 'PASSWORD' substring)
+AVD-KSV-0109
