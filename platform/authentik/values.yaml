@@ -2,19 +2,13 @@ authentik:
   global:
     deploymentStrategy:
       type: Recreate
-    podSecurityContext:
+    securityContext:
       runAsNonRoot: true
       runAsUser: 1000
       runAsGroup: 1000
       fsGroup: 1000
       seccompProfile:
         type: RuntimeDefault
-    securityContext:
-      allowPrivilegeEscalation: false
-      readOnlyRootFilesystem: false
-      capabilities:
-        drop:
-          - ALL
 
   authentik:
     secret_key: ""
@@ -28,6 +22,12 @@ authentik:
 
   server:
     replicas: 1
+    containerSecurityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: false
+      capabilities:
+        drop:
+          - ALL
     envFrom:
       - secretRef:
           name: authentik-secrets
@@ -54,6 +54,12 @@ authentik:
 
   worker:
     replicas: 1
+    containerSecurityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: false
+      capabilities:
+        drop:
+          - ALL
     envFrom:
       - secretRef:
           name: authentik-secrets
@@ -101,32 +107,3 @@ authentik:
         limits:
           cpu: 500m
           memory: 512Mi
-
-  redis:
-    enabled: true
-    architecture: standalone
-    auth:
-      enabled: false
-    master:
-      podSecurityContext:
-        enabled: true
-        fsGroup: 1001
-        seccompProfile:
-          type: RuntimeDefault
-      containerSecurityContext:
-        enabled: true
-        runAsUser: 1001
-        runAsNonRoot: true
-        allowPrivilegeEscalation: false
-        capabilities:
-          drop:
-            - ALL
-      persistence:
-        enabled: false
-      resources:
-        requests:
-          cpu: 25m
-          memory: 64Mi
-        limits:
-          cpu: 250m
-          memory: 192Mi
