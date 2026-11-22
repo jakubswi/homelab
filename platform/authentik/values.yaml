@@ -1,0 +1,132 @@
+authentik:
+  global:
+    deploymentStrategy:
+      type: Recreate
+    podSecurityContext:
+      runAsNonRoot: true
+      runAsUser: 1000
+      runAsGroup: 1000
+      fsGroup: 1000
+      seccompProfile:
+        type: RuntimeDefault
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: false
+      capabilities:
+        drop:
+          - ALL
+
+  authentik:
+    secret_key: ""
+    postgresql:
+      host: "{{ .Release.Name }}-postgresql"
+      name: "authentik"
+      user: "authentik"
+      password: ""
+    redis:
+      host: ""
+
+  server:
+    replicas: 1
+    envFrom:
+      - secretRef:
+          name: authentik-secrets
+    ingress:
+      enabled: true
+      ingressClassName: traefik
+      annotations:
+        traefik.ingress.kubernetes.io/router.entrypoints: websecure
+        traefik.ingress.kubernetes.io/router.tls: "true"
+        traefik.ingress.kubernetes.io/router.middlewares: traefik-rate-limit@kubernetescrd,traefik-security-headers@kubernetescrd
+      hosts:
+        - auth.jakubswi.dev
+      paths:
+        - /
+      pathType: Prefix
+      tls: []
+    resources:
+      requests:
+        cpu: 100m
+        memory: 384Mi
+      limits:
+        cpu: 1000m
+        memory: 768Mi
+
+  worker:
+    replicas: 1
+    envFrom:
+      - secretRef:
+          name: authentik-secrets
+    resources:
+      requests:
+        cpu: 100m
+        memory: 384Mi
+      limits:
+        cpu: 1000m
+        memory: 768Mi
+
+  postgresql:
+    enabled: true
+    auth:
+      username: authentik
+      database: authentik
+      existingSecret: authentik-secrets
+      secretKeys:
+        adminPasswordKey: AUTHENTIK_POSTGRESQL__PASSWORD
+        userPasswordKey: AUTHENTIK_POSTGRESQL__PASSWORD
+    primary:
+      podSecurityContext:
+        enabled: true
+        fsGroup: 1001
+        seccompProfile:
+          type: RuntimeDefault
+      containerSecurityContext:
+        enabled: true
+        runAsUser: 1001
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - ALL
+      persistence:
+        enabled: true
+        storageClass: "-"
+        accessModes:
+          - ReadWriteOnce
+        size: 10Gi
+      resources:
+        requests:
+          cpu: 50m
+          memory: 192Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+
+  redis:
+    enabled: true
+    architecture: standalone
+    auth:
+      enabled: false
+    master:
+      podSecurityContext:
+        enabled: true
+        fsGroup: 1001
+        seccompProfile:
+          type: RuntimeDefault
+      containerSecurityContext:
+        enabled: true
+        runAsUser: 1001
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - ALL
+      persistence:
+        enabled: false
+      resources:
+        requests:
+          cpu: 25m
+          memory: 64Mi
+        limits:
+          cpu: 250m
+          memory: 192Mi

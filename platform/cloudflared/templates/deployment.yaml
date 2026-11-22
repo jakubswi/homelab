@@ -24,6 +24,11 @@ data:
         originRequest:
           originServerName: vaultwarden.jakubswi.dev
           http2Origin: true
+      - hostname: auth.jakubswi.dev
+        service: https://traefik.traefik.svc.cluster.local:443
+          originRequest:
+          originServerName: auth.jakubswi.dev
+       http2Origin: true
       # Catch-all rule: reject everything else!
       - service: http_status:404
 ---

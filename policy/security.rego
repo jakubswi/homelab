@@ -54,3 +54,10 @@ all_empty_values(obj) if {
 		v == ""
 	}
 }
+
+# Internal chart-rendered config secrets that contain routing/scrape/app configs rather than credentials
+allowed_config_secrets := {
+	"alertmanager-monitoring-kube-prometheus-alertmanager",
+	"monitoring-kube-prometheus-prometheus-scrape-confg",
+	"authentik",
+}

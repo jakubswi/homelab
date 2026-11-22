@@ -1,0 +1,11 @@
+apiVersion: v2
+name: authentik
+description: Homelab Identity Provider (SSO / OIDC / ForwardAuth)
+type: application
+version: 0.1.0
+appVersion: "2026.2.1"
+
+dependencies:
+  - name: authentik
+    version: "2026.2.1"
+    repository: "https://charts.goauthentik.io"
