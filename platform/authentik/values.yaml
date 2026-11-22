@@ -95,6 +95,8 @@ authentik:
         capabilities:
           drop:
             - ALL
+          add:
+            - KILL
       persistence:
         enabled: true
         storageClass: "-"
