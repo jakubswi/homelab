@@ -11,7 +11,7 @@ data:
   oidc.config: |
     name: Authentik
     issuer: https://auth.jakubswi.dev/application/o/argocd/
-    clientID: "tP17959zNssa0cKPjdyJubd9h457PjQTfj20P9KT"
+    clientID: "Q3q12WNMe4cJHfgAWjgsuck39qgJKaVeMuNy8OUl"
     clientSecret: $oidc.authentik.clientSecret
     requestedScopes:
       - openid
