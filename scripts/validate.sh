@@ -4,9 +4,12 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
+mkdir -p .kubeconform-cache
+
 KC=(kubeconform -strict -ignore-missing-schemas -summary
-  -schema-location default
-  -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json')
+  -cache .kubeconform-cache
+  -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json'
+  -schema-location default)
 
 fail=0
 for dir in platform/* apps/* clusters/home bootstrap/argocd; do
