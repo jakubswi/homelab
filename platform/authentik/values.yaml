@@ -17,8 +17,6 @@ authentik:
       name: "authentik"
       user: "authentik"
       password: ""
-    redis:
-      host: ""
 
   server:
     replicas: 1
@@ -43,14 +41,14 @@ authentik:
       paths:
         - /
       pathType: Prefix
-      tls: []
+      tls: [ ]
     resources:
       requests:
         cpu: 100m
-        memory: 384Mi
+        memory: 512Mi
       limits:
         cpu: 1000m
-        memory: 768Mi
+        memory: 1536Mi
 
   worker:
     replicas: 1
@@ -66,10 +64,10 @@ authentik:
     resources:
       requests:
         cpu: 100m
-        memory: 384Mi
+        memory: 512Mi
       limits:
         cpu: 1000m
-        memory: 768Mi
+        memory: 1536Mi
 
   postgresql:
     enabled: true
