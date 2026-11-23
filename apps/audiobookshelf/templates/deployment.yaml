@@ -72,18 +72,18 @@ spec:
       volumes:
         - name: config
           hostPath:
-            path: { { .Values.storage.appDataHostPath } }/config
+            path: {{ .Values.storage.appDataHostPath }}/config
             type: DirectoryOrCreate
         - name: metadata
           hostPath:
-            path: { { .Values.storage.appDataHostPath } }/metadata
+            path: {{ .Values.storage.appDataHostPath }}/metadata
             type: DirectoryOrCreate
         - name: audiobooks
           hostPath:
-            path: { { .Values.storage.mediaHostPath } }/Audiobook
+            path: {{ .Values.storage.mediaHostPath }}/Audiobooks
             type: Directory
         - name: tmp
-          emptyDir: { }
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
