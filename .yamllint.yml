@@ -14,3 +14,8 @@ rules:
   indentation:
     spaces: 2
     indent-sequences: consistent
+  braces:
+    max-spaces-inside: 1
+  octal-values:
+    forbid-implicit-octal: true
+    forbid-explicit-octal: true
