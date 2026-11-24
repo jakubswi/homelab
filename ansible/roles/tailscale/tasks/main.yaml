@@ -40,6 +40,7 @@
 
 - name: Bring Tailscale up and advertise routes (if authkey is provided)
   ansible.builtin.command: "tailscale up --advertise-routes={{ lan_subnet | default('192.168.0.0/24') }} --authkey={{ tailscale_authkey }}"
+  changed_when: true
   become: true
   when: tailscale_status.rc != 0 and tailscale_authkey is defined
 

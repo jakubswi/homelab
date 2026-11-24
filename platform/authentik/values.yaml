@@ -41,7 +41,7 @@ authentik:
       paths:
         - /
       pathType: Prefix
-      tls: [ ]
+      tls: []
     resources:
       requests:
         cpu: 100m
