@@ -16,6 +16,9 @@ spec:
     spec:
       automountServiceAccountToken: false
       hostNetwork: true
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: intel-gpu-exporter
           image: ghcr.io/onedr0p/intel-gpu-exporter:rolling
