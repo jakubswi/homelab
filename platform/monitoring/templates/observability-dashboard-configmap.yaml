@@ -1,0 +1,148 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loki-tempo-observability-dashboard
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+data:
+  loki-tempo-observability.json: |
+    {
+      "title": "Loki & Tempo Observability Pipeline",
+      "uid": "loki-tempo-pipeline",
+      "timezone": "browser",
+      "schemaVersion": 39,
+      "refresh": "30s",
+      "templating": {
+        "list": [
+          {
+            "name": "namespace",
+            "type": "query",
+            "datasource": {"type": "prometheus", "uid": "prometheus"},
+            "query": "label_values(kube_pod_info, namespace)",
+            "current": {"text": "All", "value": "$__all"},
+            "includeAll": true,
+            "multi": true,
+            "refresh": 2
+          }
+        ]
+      },
+      "panels": [
+        {
+          "title": "Loki Log Ingestion Rate (Bytes/s)",
+          "type": "timeseries",
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "gridPos": {"h": 7, "w": 8, "x": 0, "y": 0},
+          "fieldConfig": {"defaults": {"unit": "Bps"}},
+          "targets": [
+            {
+              "expr": "sum(rate(loki_distributor_bytes_received_total[5m]))",
+              "legendFormat": "Ingested Bytes/s"
+            }
+          ]
+        },
+        {
+          "title": "Loki Active Streams",
+          "type": "stat",
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "gridPos": {"h": 7, "w": 4, "x": 8, "y": 0},
+          "targets": [
+            {
+              "expr": "sum(loki_ingester_memory_streams)",
+              "legendFormat": "Active Streams"
+            }
+          ]
+        },
+        {
+          "title": "Tempo Spans Received / sec",
+          "type": "timeseries",
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "gridPos": {"h": 7, "w": 8, "x": 12, "y": 0},
+          "fieldConfig": {"defaults": {"unit": "ops"}},
+          "targets": [
+            {
+              "expr": "sum(rate(tempo_distributor_spans_received_total[5m]))",
+              "legendFormat": "Spans/s"
+            }
+          ]
+        },
+        {
+          "title": "Tempo Ingested Bytes / sec",
+          "type": "stat",
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "gridPos": {"h": 7, "w": 4, "x": 20, "y": 0},
+          "fieldConfig": {"defaults": {"unit": "Bps"}},
+          "targets": [
+            {
+              "expr": "sum(rate(tempo_distributor_bytes_received_total[5m]))",
+              "legendFormat": "Trace Bytes/s"
+            }
+          ]
+        },
+        {
+          "title": "Observability Stack Memory Usage (Loki / Tempo / Alloy)",
+          "type": "timeseries",
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "gridPos": {"h": 7, "w": 12, "x": 0, "y": 7},
+          "fieldConfig": {"defaults": {"unit": "bytes"}},
+          "targets": [
+            {
+              "expr": "sum by (pod) (container_memory_working_set_bytes{namespace=\"monitoring\", pod=~\"monitoring-(loki|tempo|alloy).*\", container!=\"\"})",
+              "legendFormat": "{{ "{{pod}}" }}"
+            }
+          ]
+        },
+        {
+          "title": "Alloy Log Lines Forwarded to Loki (/s)",
+          "type": "timeseries",
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "gridPos": {"h": 7, "w": 12, "x": 12, "y": 7},
+          "fieldConfig": {"defaults": {"unit": "lps"}},
+          "targets": [
+            {
+              "expr": "sum(rate(loki_write_sent_entries_total[5m]))",
+              "legendFormat": "Entries Sent/s"
+            },
+            {
+              "expr": "sum(rate(loki_write_dropped_entries_total[5m]))",
+              "legendFormat": "Entries Dropped/s"
+            }
+          ]
+        },
+        {
+          "title": "Live Cluster Pod Logs",
+          "type": "logs",
+          "datasource": {"type": "loki", "uid": "loki"},
+          "gridPos": {"h": 12, "w": 24, "x": 0, "y": 14},
+          "options": {
+            "showTime": true,
+            "showLabels": true,
+            "wrapLogMessage": true,
+            "enableLogDetails": true,
+            "dedupStrategy": "none",
+            "sortOrder": "Descending"
+          },
+          "targets": [
+            {
+              "expr": "{namespace=~\"$namespace\"}",
+              "refId": "A"
+            }
+          ]
+        }
+      ]
+    }
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: loki-single-binary
+  namespace: monitoring
+  labels:
+    release: monitoring
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: loki
+  endpoints:
+    - port: http-metrics
+      interval: 30s

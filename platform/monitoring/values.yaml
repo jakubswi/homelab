@@ -73,6 +73,10 @@ kube-prometheus-stack:
           gnetId: 1860
           revision: 37
           datasource: Prometheus
+        loki-logs:
+          gnetId: 13639
+          revision: 2
+          datasource: Loki
     ingress:
       enabled: true
       ingressClassName: traefik
@@ -239,6 +243,8 @@ alloy:
     mounts:
       varlog: true
       dockercontainers: false
+    serviceMonitor:
+      enabled: true
     configMap:
       content: |
         // Discover all Kubernetes pods on the node
